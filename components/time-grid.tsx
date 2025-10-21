@@ -91,7 +91,7 @@ export function TimeGrid({
   };
 
   // Calculate the height based on time increment
-  const slotHeight = timeIncrement === 15 ? "h-8" : timeIncrement === 30 ? "h-10" : "h-12";
+  const slotHeight = timeIncrement === 15 ? "h-10" : timeIncrement === 30 ? "h-12" : "h-16";
 
   return (
     <div
@@ -100,8 +100,8 @@ export function TimeGrid({
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
     >
-      <div className="space-y-px">
-        {timeSlots.map((time) => {
+      <div className="relative">
+        {timeSlots.map((time, index) => {
           const entry = getEntryForTimeSlot(time);
           const isSelected = isTimeSlotSelected(time);
           const { isStart: isEntryStart, isEnd: isEntryEnd } = entry ? isEntryBoundary(entry, time) : { isStart: false, isEnd: false };
@@ -109,38 +109,84 @@ export function TimeGrid({
           return (
             <div
               key={time}
-              className={cn(
-                "flex items-center border-b transition-colors cursor-pointer",
-                slotHeight,
-                isSelected && "bg-primary/20",
-                !entry && "hover:bg-accent",
-                entry && "border-transparent"
-              )}
-              onMouseDown={() => !entry && handleMouseDown(time)}
-              onMouseEnter={() => handleMouseEnter(time)}
+              className="relative flex"
             >
-              <div className="w-16 px-3 text-sm text-muted-foreground font-medium">
-                {formatTime(time)}
+              {/* Time label column */}
+              <div className="w-16 pr-3 flex-shrink-0 relative">
+                <div className={cn(
+                  "absolute -top-2 right-3 text-xs font-medium",
+                  "text-muted-foreground/70"
+                )}>
+                  {formatTime(time)}
+                </div>
               </div>
-              <div className="flex-1 h-full relative">
-                {entry ? (
-                  <div
-                    className={cn(
-                      "h-full flex items-center px-3 text-sm font-medium text-white",
-                      isEntryStart && "rounded-t",
-                      isEntryEnd && "rounded-b"
-                    )}
-                    style={{ backgroundColor: getProjectColor(entry.project_id) }}
-                  >
-                    {isEntryStart && getProjectName(entry.project_id)}
-                  </div>
-                ) : (
-                  <div className="h-full" />
-                )}
+
+              {/* Time slot content */}
+              <div className="flex-1 relative">
+                {/* Border line */}
+                {index === 0 && <div className="absolute top-0 left-0 right-0 h-px bg-border/40" />}
+
+                <div
+                  className={cn(
+                    "relative transition-all duration-150",
+                    slotHeight,
+                    !entry && "hover:bg-accent/30 cursor-pointer group",
+                    entry && "cursor-default"
+                  )}
+                  onMouseDown={() => !entry && handleMouseDown(time)}
+                  onMouseEnter={() => handleMouseEnter(time)}
+                >
+                  {/* Selection overlay */}
+                  {isSelected && (
+                    <div className="absolute inset-0 bg-primary/8 border-l-2 border-primary/50" />
+                  )}
+
+                  {/* Entry block */}
+                  {entry ? (
+                    <div
+                      className={cn(
+                        "absolute inset-0 flex items-center px-3",
+                        "text-sm font-medium text-white",
+                        "transition-all duration-200",
+                        isEntryStart && isEntryEnd && "rounded-lg my-0.5 mx-0.5",
+                        isEntryStart && !isEntryEnd && "rounded-t-lg mt-0.5 mx-0.5",
+                        !isEntryStart && isEntryEnd && "rounded-b-lg mb-0.5 mx-0.5",
+                        !isEntryStart && !isEntryEnd && "mx-0.5"
+                      )}
+                      style={{
+                        backgroundColor: getProjectColor(entry.project_id),
+                      }}
+                    >
+                      {isEntryStart && (
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold tracking-tight">
+                            {getProjectName(entry.project_id)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
+                </div>
+
+                {/* Bottom border line */}
+                <div className="absolute bottom-0 left-0 right-0 h-px bg-border/40" />
               </div>
             </div>
           );
         })}
+
+        {/* Final time marker at the end */}
+        <div className="relative flex">
+          <div className="w-16 pr-3 flex-shrink-0 relative">
+            <div className={cn(
+              "absolute -top-2 right-3 text-xs font-medium",
+              "text-muted-foreground/70"
+            )}>
+              {formatTime(dayEndHour)}
+            </div>
+          </div>
+          <div className="flex-1" />
+        </div>
       </div>
     </div>
   );

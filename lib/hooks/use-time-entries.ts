@@ -18,7 +18,7 @@ export function useTimeEntries(date: Date) {
           .from("time_entries")
           .select("*")
           .eq("date", dateString)
-          .order("start_hour");
+          .order("start_time");
 
         if (error) throw error;
         setEntries((data as TimeEntry[]) || []);
