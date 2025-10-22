@@ -193,11 +193,39 @@ export function useTimeSlots(date: Date) {
     }
   };
 
+  const deleteEntry = async (entryId: string) => {
+    // Find the entry and delete all its slots
+    const entry = entries.find((e) => e.id === entryId);
+    if (!entry) return;
+
+    const oldSlots = [...slots];
+
+    // Optimistic update - remove all slots belonging to this entry
+    setSlots((prev) => prev.filter((s) => !entry.slot_ids.includes(s.id)));
+
+    try {
+      const { error } = await supabase
+        .from("time_slots")
+        .delete()
+        .in("id", entry.slot_ids);
+
+      if (error) throw error;
+      toast.success("Entry deleted");
+    } catch (error) {
+      // Rollback on error
+      setSlots(oldSlots);
+      console.error("Error deleting entry:", error);
+      toast.error("Failed to delete entry");
+      throw error;
+    }
+  };
+
   return {
     slots,
     entries,
     isLoading,
     toggleSlot,
     addSlots,
+    deleteEntry,
   };
 }

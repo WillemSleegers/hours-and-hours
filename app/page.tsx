@@ -17,7 +17,7 @@ export default function Home() {
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
 
   const { projects, isLoading: projectsLoading } = useProjects()
-  const { entries, addSlots, toggleSlot } = useTimeSlots(currentDate)
+  const { entries, addSlots, toggleSlot, deleteEntry } = useTimeSlots(currentDate)
   const { settings, updateSettings, isLoading: settingsLoading } = useUserSettings()
 
   // Calculate the actual range of hours based on entries
@@ -134,6 +134,7 @@ export default function Home() {
               projects={projects}
               onBlockSelect={handleBlockSelect}
               onSlotToggle={toggleSlot}
+              onEntryDelete={deleteEntry}
               activeProjectId={activeProjectId}
               dayStartHour={displayStartHour}
               dayEndHour={displayEndHour}

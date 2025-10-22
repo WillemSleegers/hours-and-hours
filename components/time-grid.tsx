@@ -8,7 +8,8 @@ interface TimeGridProps {
   entries: TimeEntry[];
   projects: Project[];
   onBlockSelect: (startTime: number, endTime: number) => void;
-  onSlotToggle?: (projectId: string, timeSlot: number) => void;
+  onSlotToggle: (projectId: string, timeSlot: number) => void;
+  onEntryDelete: (entryId: string) => void;
   activeProjectId: string | null;
   dayStartHour?: number;
   dayEndHour?: number;
@@ -20,6 +21,7 @@ export function TimeGrid({
   projects,
   onBlockSelect,
   onSlotToggle,
+  onEntryDelete,
   activeProjectId,
   dayStartHour = 0,
   dayEndHour = 24,
@@ -29,6 +31,7 @@ export function TimeGrid({
   const [dragStart, setDragStart] = useState<number | null>(null);
   const [dragEnd, setDragEnd] = useState<number | null>(null);
   const [hoveredTime, setHoveredTime] = useState<number | null>(null);
+  const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
 
   // Always display 15-minute slots for visual precision
@@ -45,9 +48,11 @@ export function TimeGrid({
     return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
   };
 
-  // Snap time to the user's increment setting
+  // Snap to the clicked 15-min slot (always start from where you clicked)
+  // For 30min increment: clicking 9:15 selects 9:15-9:45, clicking 9:45 selects 9:45-10:15
   const snapToIncrement = (time: number) => {
-    return Math.floor(time / incrementInHours) * incrementInHours;
+    // Just round to nearest 15-min slot - don't floor to increment boundary
+    return Math.round(time * 4) / 4;
   };
 
   const handleMouseDown = (time: number) => {
@@ -79,8 +84,8 @@ export function TimeGrid({
   const isTimeSlotSelected = (time: number) => {
     if (!isDragging || dragStart === null || dragEnd === null) return false;
     const start = Math.min(dragStart, dragEnd);
-    const end = Math.max(dragStart, dragEnd);
-    return time >= start && time <= end;
+    const end = Math.max(dragStart, dragEnd) + incrementInHours;
+    return time >= start && time < end;
   };
 
   const getEntryForTimeSlot = (time: number) => {
@@ -101,21 +106,36 @@ export function TimeGrid({
   const slotHeight = "h-10";
 
   // Check if a slot should be highlighted based on hover and increment
+  // When hovering, highlight the full increment range (e.g., 2 slots for 30min)
   const isSlotHovered = (time: number) => {
     if (!hoveredTime || isDragging || !activeProjectId) return false;
+    // Snap the hovered time to start of increment
     const snappedHover = snapToIncrement(hoveredTime);
+    // Check if this slot is in the increment range
     return time >= snappedHover && time < snappedHover + incrementInHours;
   };
 
-  // Handle slot click - just toggle the slot for active project
+  // Handle slot click - toggle slots (add if empty, remove if filled)
   const handleSlotClick = (time: number) => {
-    if (!activeProjectId || !onSlotToggle) return;
+    if (!activeProjectId) return;
 
-    // Round to nearest 15-minute slot
-    const slotTime = Math.round(time * 4) / 4;
+    // Snap to the clicked 15-min slot
+    const snappedTime = snapToIncrement(time);
 
-    // Simply toggle the slot for the active project
-    onSlotToggle(activeProjectId, slotTime);
+    // Check if there's an entry at this time for the active project
+    const existingEntry = entries.find(
+      (e) => e.project_id === activeProjectId && time >= e.start_time && time < e.end_time
+    );
+
+    if (existingEntry) {
+      // If clicking on our own project's entry, toggle off all slots in the increment range
+      for (let t = snappedTime; t < snappedTime + incrementInHours; t += 0.25) {
+        onSlotToggle(activeProjectId, Math.round(t * 4) / 4);
+      }
+    } else {
+      // Add all slots for the full increment range
+      onBlockSelect(snappedTime, snappedTime + incrementInHours);
+    }
   };
 
   const getProjectColor = (projectId: string) => {
@@ -164,16 +184,22 @@ export function TimeGrid({
 
                 <div
                   className={cn(
-                    "relative transition-all duration-150",
+                    "relative",
                     slotHeight,
-                    !entry && activeProjectId && "cursor-pointer group",
+                    !entry && activeProjectId && "cursor-pointer",
                     !entry && isHovered && "bg-accent/30",
                     entry && "cursor-pointer"
                   )}
                   onMouseDown={() => !entry && handleMouseDown(time)}
                   onMouseEnter={() => {
-                    if (activeProjectId) {
+                    if (activeProjectId || entry) {
                       handleMouseEnter(time);
+                      setHoveredTime(time);
+                    }
+                  }}
+                  onMouseMove={() => {
+                    // Update hover on mouse move to handle borders better
+                    if (activeProjectId || entry) {
                       setHoveredTime(time);
                     }
                   }}
@@ -182,7 +208,7 @@ export function TimeGrid({
                 >
                   {/* Selection overlay for dragging new blocks */}
                   {isSelected && (
-                    <div className="absolute inset-0 bg-primary/8 border-l-2 border-primary/50" />
+                    <div className="absolute inset-0 bg-primary/8" />
                   )}
 
                   {/* Entry block */}
@@ -199,12 +225,40 @@ export function TimeGrid({
                       style={{
                         backgroundColor: getProjectColor(entry.project_id),
                       }}
+                      onClick={(e) => {
+                        // Only allow deletion when no active project is selected
+                        if (!activeProjectId) {
+                          e.stopPropagation();
+                          setSelectedEntryId(entry.id);
+                        }
+                      }}
                     >
+                      {/* Selection overlay */}
+                      {selectedEntryId === entry.id && !activeProjectId && (
+                        <div className="absolute inset-0 bg-black/10 pointer-events-none" />
+                      )}
+
                       {isEntryStart && (
-                        <div className="flex items-center gap-2 relative z-10 pointer-events-none">
-                          <span className="font-semibold tracking-tight">
+                        <div className="flex items-center justify-between w-full relative z-10">
+                          <span className="font-semibold tracking-tight pointer-events-none">
                             {getProjectName(entry.project_id)}
                           </span>
+                          {/* Delete button - shows when selected and no active project */}
+                          {selectedEntryId === entry.id && !activeProjectId && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onEntryDelete(entry.id);
+                                setSelectedEntryId(null);
+                              }}
+                              className="bg-white/20 hover:bg-white/30 rounded p-1 transition-colors"
+                              title="Delete entry"
+                            >
+                              <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M18 6L6 18M6 6l12 12" />
+                              </svg>
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
