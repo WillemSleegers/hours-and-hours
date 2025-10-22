@@ -6,14 +6,23 @@ export interface Project {
   updated_at?: string;
 }
 
-export interface TimeEntry {
+export interface TimeSlot {
   id: string;
+  project_id: string;
+  date: string;
+  time_slot: number; // The 15-minute slot (e.g., 9.0, 9.25, 9.5, 9.75, 10.0)
+  created_at?: string;
+  updated_at?: string;
+}
+
+// For backward compatibility and rendering - group consecutive slots into entries
+export interface TimeEntry {
+  id: string; // Will use the first slot's ID
   project_id: string;
   date: string;
   start_time: number;
   end_time: number;
-  created_at?: string;
-  updated_at?: string;
+  slot_ids: string[]; // Track which slots belong to this visual entry
 }
 
 export interface TimeBlock {

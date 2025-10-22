@@ -8,6 +8,8 @@ interface TimeGridProps {
   entries: TimeEntry[];
   projects: Project[];
   onBlockSelect: (startTime: number, endTime: number) => void;
+  onSlotToggle?: (projectId: string, timeSlot: number) => void;
+  activeProjectId: string | null;
   dayStartHour?: number;
   dayEndHour?: number;
   timeIncrement?: 15 | 30 | 60;
@@ -17,6 +19,8 @@ export function TimeGrid({
   entries,
   projects,
   onBlockSelect,
+  onSlotToggle,
+  activeProjectId,
   dayStartHour = 0,
   dayEndHour = 24,
   timeIncrement = 60,
@@ -24,12 +28,16 @@ export function TimeGrid({
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<number | null>(null);
   const [dragEnd, setDragEnd] = useState<number | null>(null);
+  const [hoveredTime, setHoveredTime] = useState<number | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
 
-  // Generate time slots based on increment
+  // Always display 15-minute slots for visual precision
+  const displayIncrementInHours = 0.25; // 15 minutes
+  const totalSlots = Math.floor((dayEndHour - dayStartHour) / displayIncrementInHours);
+  const timeSlots = Array.from({ length: totalSlots }, (_, i) => dayStartHour + i * displayIncrementInHours);
+
+  // User's increment setting controls selection granularity
   const incrementInHours = timeIncrement / 60;
-  const totalSlots = Math.floor((dayEndHour - dayStartHour) / incrementInHours);
-  const timeSlots = Array.from({ length: totalSlots }, (_, i) => dayStartHour + i * incrementInHours);
 
   const formatTime = (time: number) => {
     const hours = Math.floor(time);
@@ -37,15 +45,23 @@ export function TimeGrid({
     return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
   };
 
+  // Snap time to the user's increment setting
+  const snapToIncrement = (time: number) => {
+    return Math.floor(time / incrementInHours) * incrementInHours;
+  };
+
   const handleMouseDown = (time: number) => {
+    if (!activeProjectId) return; // Don't allow dragging without active project
+    const snappedTime = snapToIncrement(time);
     setIsDragging(true);
-    setDragStart(time);
-    setDragEnd(time);
+    setDragStart(snappedTime);
+    setDragEnd(snappedTime);
   };
 
   const handleMouseEnter = (time: number) => {
     if (isDragging) {
-      setDragEnd(time);
+      const snappedTime = snapToIncrement(time);
+      setDragEnd(snappedTime);
     }
   };
 
@@ -73,6 +89,35 @@ export function TimeGrid({
     );
   };
 
+  // Check if this time slot is the start or end of an entry
+  const isEntryBoundary = (entry: TimeEntry, time: number) => {
+    const isStart = entry.start_time === time;
+    // Check if this is the last 15-min slot that contains part of the entry
+    const isEnd = entry.end_time > time && entry.end_time <= time + displayIncrementInHours;
+    return { isStart, isEnd };
+  };
+
+  // All 15-minute slots have the same height
+  const slotHeight = "h-10";
+
+  // Check if a slot should be highlighted based on hover and increment
+  const isSlotHovered = (time: number) => {
+    if (!hoveredTime || isDragging || !activeProjectId) return false;
+    const snappedHover = snapToIncrement(hoveredTime);
+    return time >= snappedHover && time < snappedHover + incrementInHours;
+  };
+
+  // Handle slot click - just toggle the slot for active project
+  const handleSlotClick = (time: number) => {
+    if (!activeProjectId || !onSlotToggle) return;
+
+    // Round to nearest 15-minute slot
+    const slotTime = Math.round(time * 4) / 4;
+
+    // Simply toggle the slot for the active project
+    onSlotToggle(activeProjectId, slotTime);
+  };
+
   const getProjectColor = (projectId: string) => {
     const project = projects.find((p) => p.id === projectId);
     return project?.color || "#94a3b8";
@@ -82,16 +127,6 @@ export function TimeGrid({
     const project = projects.find((p) => p.id === projectId);
     return project?.name || "Unknown";
   };
-
-  // Check if this time slot is the start or end of an entry
-  const isEntryBoundary = (entry: TimeEntry, time: number) => {
-    const isStart = entry.start_time === time;
-    const isEnd = entry.end_time === time + incrementInHours;
-    return { isStart, isEnd };
-  };
-
-  // Calculate the height based on time increment
-  const slotHeight = timeIncrement === 15 ? "h-10" : timeIncrement === 30 ? "h-12" : "h-16";
 
   return (
     <div
@@ -104,6 +139,7 @@ export function TimeGrid({
         {timeSlots.map((time, index) => {
           const entry = getEntryForTimeSlot(time);
           const isSelected = isTimeSlotSelected(time);
+          const isHovered = isSlotHovered(time);
           const { isStart: isEntryStart, isEnd: isEntryEnd } = entry ? isEntryBoundary(entry, time) : { isStart: false, isEnd: false };
 
           return (
@@ -130,13 +166,21 @@ export function TimeGrid({
                   className={cn(
                     "relative transition-all duration-150",
                     slotHeight,
-                    !entry && "hover:bg-accent/30 cursor-pointer group",
-                    entry && "cursor-default"
+                    !entry && activeProjectId && "cursor-pointer group",
+                    !entry && isHovered && "bg-accent/30",
+                    entry && "cursor-pointer"
                   )}
                   onMouseDown={() => !entry && handleMouseDown(time)}
-                  onMouseEnter={() => handleMouseEnter(time)}
+                  onMouseEnter={() => {
+                    if (activeProjectId) {
+                      handleMouseEnter(time);
+                      setHoveredTime(time);
+                    }
+                  }}
+                  onMouseLeave={() => setHoveredTime(null)}
+                  onClick={() => handleSlotClick(time)}
                 >
-                  {/* Selection overlay */}
+                  {/* Selection overlay for dragging new blocks */}
                   {isSelected && (
                     <div className="absolute inset-0 bg-primary/8 border-l-2 border-primary/50" />
                   )}
@@ -145,9 +189,8 @@ export function TimeGrid({
                   {entry ? (
                     <div
                       className={cn(
-                        "absolute inset-0 flex items-center px-3",
+                        "absolute inset-0 flex items-center justify-between px-3",
                         "text-sm font-medium text-white",
-                        "transition-all duration-200",
                         isEntryStart && isEntryEnd && "rounded-lg my-0.5 mx-0.5",
                         isEntryStart && !isEntryEnd && "rounded-t-lg mt-0.5 mx-0.5",
                         !isEntryStart && isEntryEnd && "rounded-b-lg mb-0.5 mx-0.5",
@@ -158,7 +201,7 @@ export function TimeGrid({
                       }}
                     >
                       {isEntryStart && (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 relative z-10 pointer-events-none">
                           <span className="font-semibold tracking-tight">
                             {getProjectName(entry.project_id)}
                           </span>

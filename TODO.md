@@ -1,6 +1,21 @@
 # Hours and Hours - Feature Roadmap
 
-## Bugs to Fix
+## Recently Completed
+
+- [x] **Slot-Based Architecture** - Migrated from range-based entries to individual 15-min slots
+  - Simpler data model and editing
+  - No complex merge/split logic needed
+  - Direct slot manipulation via clicking/dragging
+
+- [x] **Mobile-First UI** - Floating island design optimized for thumb zones
+  - Header: Total hours and date navigation
+  - Footer: Date controls, time increment selector, project dropdown
+  - All primary actions in easy-to-reach footer area
+
+- [x] **Time Increment Setting** - Configurable selection granularity (15m/30m/1h)
+  - Always displays 15-min slots for precision
+  - Increment controls selection/hover snapping only
+  - Accessible from footer for quick adjustment
 
 - [x] **Date Filtering Bug** - Time entries appearing on all days instead of being filtered by specific date. Fixed by correcting the `order` column from `start_hour` to `start_time`.
 
@@ -11,10 +26,11 @@
   - Useful for entering time for past days or planning ahead
   - Could use shadcn calendar component
 
-- [ ] **Edit/Delete Time Entries** - Enable clicking on an entry to edit or delete it. Essential for fixing mistakes.
-  - Click on entry to open edit dialog
-  - Show start/end time and project
-  - Allow changing project, adjusting times, or deleting
+- [x] **Edit/Delete Time Entries** - ✅ Implemented as slot-based toggling
+  - Select project from dropdown in footer
+  - Click individual 15-min slots to toggle them on/off
+  - Drag across multiple slots to fill quickly
+  - Simple paint-style interaction - no modes or buttons needed
 
 - [ ] **Copy Previous Day** - Button to copy all time entries from the previous day (or any recent day)
   - "Copy from..." dropdown showing last 7 days
@@ -23,14 +39,14 @@
 - [ ] **Keyboard Shortcuts** - Quick keys for common actions:
   - Arrow keys (Left/Right) to navigate days
   - Number keys (1-9) to quickly select frequently-used projects
-  - Enter to confirm selection
-  - Escape to cancel selection
+  - Escape to deselect active project
   - T key to jump to Today
 
-- [ ] **Quick Entry Mode** - Select project first (stays "active"), then click time blocks to fill rapidly
-  - Toggle mode with button or keyboard shortcut
-  - Shows which project is currently selected
-  - Click blocks to instantly assign to active project
+- [x] **Quick Entry Mode** - ✅ Implemented as default behavior
+  - Select project from dropdown (stays active)
+  - Active project shown with color indicator in footer
+  - Click/drag slots to instantly assign to active project
+  - No toggle needed - this is the primary interaction model
 
 - [ ] **Templates/Presets** - Save common day patterns and apply with one click
   - "Save as template" button when viewing a day
@@ -49,9 +65,9 @@
   - Easier batch entry and pattern recognition
   - Quick navigation between weeks
 
-- [ ] **Duplicate Detection Warning** - Alert when selecting a time that overlaps with existing entry
-  - Show warning dialog before creating overlapping entry
-  - Option to replace or adjust existing entry
+- [ ] **Duplicate Detection Warning** - Alert when selecting a time that overlaps with existing entry (Note: Currently slots can only belong to one project via UNIQUE constraint)
+  - Show visual indicator when trying to assign slot already taken by another project
+  - Option to replace existing slot assignment
 
 - [ ] **Recent Projects Quick Access** - Show 3-5 most recently used projects at top of selector
   - Separate "Recent" section in project selector
@@ -83,10 +99,11 @@
   - Exclude from total hours calculation
   - Different visual style (e.g., striped pattern)
 
-- [ ] **Mobile Optimizations** - Better touch gestures for mobile entry
-  - Improved touch targets for small screens
-  - Swipe gestures for navigation
-  - Mobile-specific project selector (bottom sheet style)
+- [x] **Mobile Optimizations** - ✅ Mobile-first design implemented
+  - Large touch targets for 15-min slots
+  - Floating island UI elements
+  - Footer-based controls in thumb zone
+  - Project dropdown optimized for mobile
 
 ## Future Considerations
 

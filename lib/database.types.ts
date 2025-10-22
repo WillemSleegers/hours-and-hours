@@ -33,13 +33,12 @@ export interface Database {
         }
         Relationships: []
       }
-      time_entries: {
+      time_slots: {
         Row: {
           id: string
           project_id: string
           date: string
-          start_time: number
-          end_time: number
+          time_slot: number
           created_at: string
           updated_at: string
         }
@@ -47,8 +46,7 @@ export interface Database {
           id?: string
           project_id: string
           date: string
-          start_time: number
-          end_time: number
+          time_slot: number
           created_at?: string
           updated_at?: string
         }
@@ -56,14 +54,13 @@ export interface Database {
           id?: string
           project_id?: string
           date?: string
-          start_time?: number
-          end_time?: number
+          time_slot?: number
           created_at?: string
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "time_entries_project_id_fkey"
+            foreignKeyName: "time_slots_project_id_fkey"
             columns: ["project_id"]
             referencedRelation: "projects"
             referencedColumns: ["id"]
