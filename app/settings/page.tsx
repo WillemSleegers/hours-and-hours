@@ -82,7 +82,7 @@ export default function SettingsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="dayStart">Day Start</Label>
                 <Select
@@ -117,23 +117,6 @@ export default function SettingsPage() {
                         {hour.toString().padStart(2, "0")}:00
                       </SelectItem>
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="timeIncrement">Time Increment</Label>
-                <Select
-                  value={settings.time_increment.toString()}
-                  onValueChange={(value) => updateSettings({ time_increment: parseInt(value) as 15 | 30 | 60 })}
-                >
-                  <SelectTrigger id="timeIncrement">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="15">15 minutes</SelectItem>
-                    <SelectItem value="30">30 minutes</SelectItem>
-                    <SelectItem value="60">1 hour</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

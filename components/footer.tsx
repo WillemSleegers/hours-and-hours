@@ -35,8 +35,8 @@ export function Footer({
   return (
     <footer className="p-3">
       <div className="max-w-4xl mx-auto bg-card border border-border rounded-2xl shadow-sm px-4 py-3">
-        <div className="flex items-center justify-between gap-4">
-          {/* Left: Date navigation */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Row 1 Left: Date navigation */}
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
@@ -64,8 +64,8 @@ export function Footer({
             </Button>
           </div>
 
-          {/* Center: Time increment buttons */}
-          <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+          {/* Row 1 Right: Time increment buttons */}
+          <div className="flex items-center gap-1 bg-muted rounded-lg p-1 ml-auto">
             <Button
               variant={timeIncrement === 15 ? "default" : "ghost"}
               size="sm"
@@ -92,59 +92,61 @@ export function Footer({
             </Button>
           </div>
 
-          {/* Right: Select Project (most frequent action) */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="default"
-                size="sm"
-                className="h-10 px-4 w-32"
-                style={
-                  activeProjectId
-                    ? {
-                        backgroundColor:
-                          projects.find((p) => p.id === activeProjectId)
-                            ?.color || undefined,
-                        borderColor:
-                          projects.find((p) => p.id === activeProjectId)
-                            ?.color || undefined,
-                      }
-                    : undefined
-                }
-              >
-                {activeProjectId
-                  ? projects.find((p) => p.id === activeProjectId)?.name ||
-                    "Project"
-                  : "Project"}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" side="top" className="w-48">
-              {activeProjectId && (
-                <>
-                  <DropdownMenuItem onClick={onClearProject}>
-                    <X className="mr-2 h-4 w-4" />
-                    Clear Selection
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                </>
-              )}
-              {projects.map((project) => (
-                <DropdownMenuItem
-                  key={project.id}
-                  onClick={() => onProjectSelect(project.id)}
+          {/* Row 2: Project dropdown (full width on mobile) */}
+          <div className="w-full">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="h-10 px-4 w-full"
+                  style={
+                    activeProjectId
+                      ? {
+                          backgroundColor:
+                            projects.find((p) => p.id === activeProjectId)
+                              ?.color || undefined,
+                          borderColor:
+                            projects.find((p) => p.id === activeProjectId)
+                              ?.color || undefined,
+                        }
+                      : undefined
+                  }
                 >
-                  <div
-                    className="mr-2 h-3 w-3 rounded-full"
-                    style={{ backgroundColor: project.color }}
-                  />
-                  {project.name}
-                  {activeProjectId === project.id && (
-                    <Check className="ml-auto h-4 w-4" />
-                  )}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  {activeProjectId
+                    ? projects.find((p) => p.id === activeProjectId)?.name ||
+                      "Project"
+                    : "Project"}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" side="top" className="w-48">
+                {activeProjectId && (
+                  <>
+                    <DropdownMenuItem onClick={onClearProject}>
+                      <X className="mr-2 h-4 w-4" />
+                      Clear Selection
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                {projects.map((project) => (
+                  <DropdownMenuItem
+                    key={project.id}
+                    onClick={() => onProjectSelect(project.id)}
+                  >
+                    <div
+                      className="mr-2 h-3 w-3 rounded-full"
+                      style={{ backgroundColor: project.color }}
+                    />
+                    {project.name}
+                    {activeProjectId === project.id && (
+                      <Check className="ml-auto h-4 w-4" />
+                    )}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
     </footer>
