@@ -182,33 +182,13 @@ export function TimeGrid({
       )
     )
 
-    console.log("handleSlotClick", {
-      time,
-      snappedTime,
-      activeProjectId,
-      slotsInRange,
-      existingSlotsForProject,
-      incrementInHours,
-      allSlotsExist: existingSlotsForProject.length === slotsInRange.length,
-    })
-
     // Only delete if ALL slots in the range are filled by the active project
     // Otherwise, add the missing slots (allows partial fills)
     if (existingSlotsForProject.length === slotsInRange.length) {
       // All slots exist - delete them (toggle off)
-      console.log(
-        "Calling onSlotsDelete",
-        snappedTime,
-        snappedTime + incrementInHours
-      )
       onSlotsDelete(snappedTime, snappedTime + incrementInHours)
     } else {
       // Some or no slots exist - add missing slots (fill or partial fill)
-      console.log(
-        "Calling onBlockSelect",
-        snappedTime,
-        snappedTime + incrementInHours
-      )
       onBlockSelect(snappedTime, snappedTime + incrementInHours)
     }
   }
@@ -295,18 +275,25 @@ export function TimeGrid({
                   : undefined,
               }}
               onMouseDown={() => !entry && handleMouseDown(time)}
-              onMouseEnter={() => {
-                if (activeProjectId || entry) {
+              onPointerEnter={(e) => {
+                // Only track hover for mouse input, not touch
+                if (e.pointerType === 'mouse' && (activeProjectId || entry)) {
                   handleMouseEnter(time)
                   setHoveredTime(time)
                 }
               }}
-              onMouseMove={() => {
-                if (activeProjectId || entry) {
+              onPointerMove={(e) => {
+                // Only track hover for mouse input, not touch
+                if (e.pointerType === 'mouse' && (activeProjectId || entry)) {
                   setHoveredTime(time)
                 }
               }}
-              onMouseLeave={() => setHoveredTime(null)}
+              onPointerLeave={(e) => {
+                // Only clear hover for mouse input
+                if (e.pointerType === 'mouse') {
+                  setHoveredTime(null)
+                }
+              }}
               onClick={() => handleSlotClick(time, entry || undefined)}
             >
               {entry && isEntryStart && (

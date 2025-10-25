@@ -140,7 +140,6 @@ export function useTimeSlots(date: Date) {
   };
 
   const addSlots = async (projectId: string, startTime: number, endTime: number) => {
-    console.log('addSlots called', { projectId, startTime, endTime });
 
     // Generate all 15-minute slots in the range
     const slotsToAdd: number[] = [];
@@ -153,10 +152,7 @@ export function useTimeSlots(date: Date) {
       (time) => !slots.some((s) => s.time_slot === time)
     );
 
-    console.log('addSlots', { slotsToAdd, newSlots, existingSlots: slots.length });
-
     if (newSlots.length === 0) {
-      console.log('No new slots to add, returning early');
       return;
     }
 
@@ -212,16 +208,11 @@ export function useTimeSlots(date: Date) {
   };
 
   const deleteEntry = async (entryId: string) => {
-    console.log('deleteEntry called', { entryId, entries: entries.length });
-
     // Find the entry and delete all its slots
     const entry = entries.find((e) => e.id === entryId);
     if (!entry) {
-      console.log('Entry not found!', entryId);
       return;
     }
-
-    console.log('Deleting entry', { entry, slotIds: entry.slot_ids });
 
     const oldSlots = [...slots];
 
@@ -246,19 +237,14 @@ export function useTimeSlots(date: Date) {
   };
 
   const deleteSlots = async (startTime: number, endTime: number) => {
-    console.log('deleteSlots called', { startTime, endTime });
-
     // Find all slots in the time range
     const slotsToDelete = slots.filter(
       (s) => s.time_slot >= startTime && s.time_slot < endTime
     );
 
     if (slotsToDelete.length === 0) {
-      console.log('No slots to delete');
       return;
     }
-
-    console.log('Deleting slots', { slotsToDelete });
 
     const oldSlots = [...slots];
     const slotIds = slotsToDelete.map((s) => s.id);
