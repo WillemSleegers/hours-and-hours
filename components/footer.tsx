@@ -50,7 +50,7 @@ export function Footer({
               variant="ghost"
               size="sm"
               onClick={onToday}
-              className="hover:bg-accent/50 h-10 text-xs px-3"
+              className="hover:bg-accent/50 h-10 px-3"
             >
               Today
             </Button>

@@ -9,6 +9,7 @@ import { Footer } from "@/components/footer"
 import { useProjects } from "@/lib/hooks/use-projects"
 import { useTimeSlots } from "@/lib/hooks/use-time-slots"
 import { useUserSettings } from "@/lib/hooks/use-user-settings"
+import { ChevronUp, ChevronDown } from "lucide-react"
 
 export default function Home() {
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -17,8 +18,12 @@ export default function Home() {
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
 
   const { projects, isLoading: projectsLoading } = useProjects()
-  const { entries, addSlots, toggleSlot, deleteEntry } = useTimeSlots(currentDate)
-  const { settings, updateSettings, isLoading: settingsLoading } = useUserSettings()
+  const { slots, entries, addSlots, deleteEntry, deleteSlots } = useTimeSlots(currentDate)
+  const {
+    settings,
+    updateSettings,
+    isLoading: settingsLoading,
+  } = useUserSettings()
 
   // Calculate the actual range of hours based on entries
   const getActualHoursRange = () => {
@@ -79,7 +84,6 @@ export default function Home() {
     setActiveProjectId(projectId)
   }
 
-
   const totalHours = entries.reduce(
     (sum, entry) => sum + (entry.end_time - entry.start_time),
     0
@@ -101,9 +105,10 @@ export default function Home() {
         <div className="text-center space-y-4">
           <h2 className="text-xl font-semibold">No Projects Found</h2>
           <p className="text-muted-foreground max-w-md">
-            It looks like your database isn&apos;t set up yet. Please check your Supabase configuration and ensure the tables are created.
+            It looks like your database isn&apos;t set up yet. Please check your
+            Supabase configuration and ensure the tables are created.
           </p>
-          <Button onClick={() => window.location.href = '/projects'}>
+          <Button onClick={() => (window.location.href = "/projects")}>
             Go to Projects
           </Button>
         </div>
@@ -119,37 +124,42 @@ export default function Home() {
       <main className="flex-1 overflow-y-auto">
         <div className="container mx-auto max-w-4xl">
           {canShowEarlier && !showEarlierHours && (
-            <Button
-              variant="ghost"
-              onClick={() => setShowEarlierHours(true)}
-              className="text-muted-foreground"
-            >
-              Show earlier hours
-            </Button>
+            <div className="flex justify-center">
+              <Button
+                variant="ghost"
+                onClick={() => setShowEarlierHours(true)}
+                className="text-muted-foreground hover:text-foreground hover:bg-accent/50 h-12 gap-2 min-w-48"
+              >
+                <ChevronUp className="h-4 w-4" />
+                Show earlier hours
+              </Button>
+            </div>
           )}
 
-          <div className="px-6 py-6">
-            <TimeGrid
-              entries={entries}
-              projects={projects}
-              onBlockSelect={handleBlockSelect}
-              onSlotToggle={toggleSlot}
-              onEntryDelete={deleteEntry}
-              activeProjectId={activeProjectId}
-              dayStartHour={displayStartHour}
-              dayEndHour={displayEndHour}
-              timeIncrement={settings.time_increment}
-            />
-          </div>
+          <TimeGrid
+            slots={slots}
+            entries={entries}
+            projects={projects}
+            onBlockSelect={handleBlockSelect}
+            onEntryDelete={deleteEntry}
+            onSlotsDelete={deleteSlots}
+            activeProjectId={activeProjectId}
+            dayStartHour={displayStartHour}
+            dayEndHour={displayEndHour}
+            timeIncrement={settings.time_increment}
+          />
 
           {canShowLater && !showLaterHours && (
-            <Button
-              variant="ghost"
-              onClick={() => setShowLaterHours(true)}
-              className="w-full rounded-none border-t border-dashed border-border/50 text-muted-foreground hover:text-foreground"
-            >
-              Show later hours
-            </Button>
+            <div className="flex justify-center">
+              <Button
+                variant="ghost"
+                onClick={() => setShowLaterHours(true)}
+                className="text-muted-foreground hover:text-foreground hover:bg-accent/50 h-12 gap-2 min-w-48"
+              >
+                <ChevronDown className="h-4 w-4" />
+                Show later hours
+              </Button>
+            </div>
           )}
         </div>
       </main>

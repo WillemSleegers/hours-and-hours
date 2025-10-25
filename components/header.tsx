@@ -22,11 +22,8 @@ export function Header({ totalHours, currentDate }: HeaderProps) {
             </span>
           </div>
           <div className="text-center">
-            <div className="text-lg font-bold">
-              {format(currentDate, "EEEE")}
-            </div>
-            <div className="text-xs text-muted-foreground">
-              {format(currentDate, "MMMM d, yyyy")}
+            <div className="text-sm font-semibold">
+              {format(currentDate, "EEEE, MMMM d, yyyy")}
             </div>
           </div>
           <div className="flex items-center gap-1">
