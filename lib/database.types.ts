@@ -14,6 +14,7 @@ export interface Database {
           id: string
           name: string
           color: string
+          archived: boolean
           created_at: string
           updated_at: string
         }
@@ -21,6 +22,7 @@ export interface Database {
           id?: string
           name: string
           color: string
+          archived?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -28,6 +30,7 @@ export interface Database {
           id?: string
           name?: string
           color?: string
+          archived?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -73,6 +76,8 @@ export interface Database {
           day_start_hour: number
           day_end_hour: number
           time_increment: number
+          stats_start_date: string | null
+          stats_end_date: string | null
           created_at: string
           updated_at: string
         }
@@ -81,6 +86,8 @@ export interface Database {
           day_start_hour?: number
           day_end_hour?: number
           time_increment?: number
+          stats_start_date?: string | null
+          stats_end_date?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -89,6 +96,8 @@ export interface Database {
           day_start_hour?: number
           day_end_hour?: number
           time_increment?: number
+          stats_start_date?: string | null
+          stats_end_date?: string | null
           created_at?: string
           updated_at?: string
         }

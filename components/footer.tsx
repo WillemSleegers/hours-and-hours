@@ -44,6 +44,9 @@ export function Footer({
   onIncrementChange,
 }: FooterProps) {
   const [datePickerOpen, setDatePickerOpen] = useState(false)
+
+  // Filter to show only non-archived projects
+  const activeProjects = projects.filter((p) => !p.archived)
   return (
     <footer className="p-3">
       <div className="max-w-4xl mx-auto bg-card border border-border rounded-2xl shadow-sm px-4 py-3">
@@ -139,7 +142,7 @@ export function Footer({
                 <Button
                   variant="default"
                   size="sm"
-                  className="h-10 px-4 w-full"
+                  className={`h-10 px-4 w-full ${activeProjectId ? "text-white" : ""}`}
                   style={
                     activeProjectId
                       ? {
@@ -155,8 +158,8 @@ export function Footer({
                 >
                   {activeProjectId
                     ? projects.find((p) => p.id === activeProjectId)?.name ||
-                      "Project"
-                    : "Project"}
+                      "Select project"
+                    : "Select project"}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" side="top" className="w-48">
@@ -169,7 +172,7 @@ export function Footer({
                     <DropdownMenuSeparator />
                   </>
                 )}
-                {projects.map((project) => (
+                {activeProjects.map((project) => (
                   <DropdownMenuItem
                     key={project.id}
                     onClick={() => onProjectSelect(project.id)}

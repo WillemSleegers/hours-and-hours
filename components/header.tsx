@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { format } from "date-fns"
-import { BarChart3, Settings, LogOut, Menu } from "lucide-react"
+import { BarChart3, Folder, Settings, LogOut, Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -40,8 +40,8 @@ export function Header({ totalHours, currentDate }: HeaderProps) {
     <header className="p-3">
       <div className="max-w-4xl mx-auto bg-card border border-border rounded-2xl shadow-sm px-4 py-3">
         <div className="flex items-center justify-between">
-          <div className="flex flex-col items-start">
-            <span className="text-xl font-bold tabular-nums leading-tight">
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-xl font-bold tabular-nums">
               {totalHours.toFixed(1)}
             </span>
             <span className="text-xs text-muted-foreground font-medium">
@@ -69,8 +69,12 @@ export function Header({ totalHours, currentDate }: HeaderProps) {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => router.push("/projects")}>
+              <DropdownMenuItem onClick={() => router.push("/statistics")}>
                 <BarChart3 className="mr-2 h-4 w-4" />
+                Statistics
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push("/projects")}>
+                <Folder className="mr-2 h-4 w-4" />
                 Projects
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => router.push("/settings")}>

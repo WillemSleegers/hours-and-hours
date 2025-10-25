@@ -6,22 +6,22 @@ import { TimeSlot, TimeEntry } from "@/lib/types";
 import { toast } from "sonner";
 
 export function useTimeSlots(date: Date) {
-  const [slots, setSlots] = useState<TimeSlot[]>([]);
+  const [allSlots, setAllSlots] = useState<TimeSlot[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const dateString = date.toISOString().split("T")[0];
 
+  // Fetch all slots once
   useEffect(() => {
     const loadSlots = async () => {
       try {
         const { data, error } = await supabase
           .from("time_slots")
           .select("*")
-          .eq("date", dateString)
           .order("time_slot");
 
         if (error) throw error;
-        setSlots((data as TimeSlot[]) || []);
+        setAllSlots((data as TimeSlot[]) || []);
       } catch (error) {
         console.error("Error loading time slots:", error);
         toast.error("Failed to load time slots");
@@ -31,7 +31,11 @@ export function useTimeSlots(date: Date) {
     };
 
     loadSlots();
-  }, [dateString]);
+  }, []);
+
+  // Filter slots for the current date (client-side)
+  // React Compiler will automatically memoize this
+  const slots = allSlots.filter((slot) => slot.date === dateString);
 
   // Convert slots into visual entries (consecutive slots grouped together)
   const entries: TimeEntry[] = [];
@@ -75,8 +79,8 @@ export function useTimeSlots(date: Date) {
 
     if (existingSlot) {
       // Delete the slot
-      const oldSlots = [...slots];
-      setSlots((prev) => prev.filter((s) => s.id !== existingSlot.id));
+      const oldSlots = [...allSlots];
+      setAllSlots((prev) => prev.filter((s) => s.id !== existingSlot.id));
 
       try {
         const { error } = await supabase
@@ -87,7 +91,7 @@ export function useTimeSlots(date: Date) {
         if (error) throw error;
       } catch (error) {
         // Rollback on error
-        setSlots(oldSlots);
+        setAllSlots(oldSlots);
         console.error("Error deleting slot:", error);
         toast.error("Failed to delete slot");
         throw error;
@@ -103,7 +107,7 @@ export function useTimeSlots(date: Date) {
       };
 
       // Optimistic update
-      setSlots((prev) => [...prev, newSlot].sort((a, b) => a.time_slot - b.time_slot));
+      setAllSlots((prev) => [...prev, newSlot].sort((a, b) => a.time_slot - b.time_slot));
 
       try {
         // Get current user
@@ -124,14 +128,14 @@ export function useTimeSlots(date: Date) {
         if (error) throw error;
 
         // Replace temp slot with real one
-        setSlots((prev) =>
+        setAllSlots((prev) =>
           prev.map((s) => (s.id === tempId ? (data as TimeSlot) : s))
         );
 
         return data;
       } catch (error) {
         // Rollback on error
-        setSlots((prev) => prev.filter((s) => s.id !== tempId));
+        setAllSlots((prev) => prev.filter((s) => s.id !== tempId));
         console.error("Error adding slot:", error);
         toast.error("Failed to add slot");
         throw error;
@@ -164,7 +168,7 @@ export function useTimeSlots(date: Date) {
     }));
 
     // Optimistic update
-    setSlots((prev) => [...prev, ...tempSlots].sort((a, b) => a.time_slot - b.time_slot));
+    setAllSlots((prev) => [...prev, ...tempSlots].sort((a, b) => a.time_slot - b.time_slot));
 
     try {
       // Get current user
@@ -187,7 +191,7 @@ export function useTimeSlots(date: Date) {
 
       // Replace temp slots with real ones
       const insertedSlots = data as TimeSlot[];
-      setSlots((prev) => {
+      setAllSlots((prev) => {
         const withoutTemp = prev.filter((s) => !s.id.startsWith("temp-"));
         return [...withoutTemp, ...insertedSlots].sort(
           (a, b) => a.time_slot - b.time_slot
@@ -198,7 +202,7 @@ export function useTimeSlots(date: Date) {
       return data;
     } catch (error) {
       // Rollback on error
-      setSlots((prev) =>
+      setAllSlots((prev) =>
         prev.filter((s) => !tempSlots.some((t) => t.id === s.id))
       );
       console.error("Error adding slots:", error);
@@ -214,10 +218,10 @@ export function useTimeSlots(date: Date) {
       return;
     }
 
-    const oldSlots = [...slots];
+    const oldSlots = [...allSlots];
 
     // Optimistic update - remove all slots belonging to this entry
-    setSlots((prev) => prev.filter((s) => !entry.slot_ids.includes(s.id)));
+    setAllSlots((prev) => prev.filter((s) => !entry.slot_ids.includes(s.id)));
 
     try {
       const { error } = await supabase
@@ -229,7 +233,7 @@ export function useTimeSlots(date: Date) {
       toast.success("Entry deleted");
     } catch (error) {
       // Rollback on error
-      setSlots(oldSlots);
+      setAllSlots(oldSlots);
       console.error("Error deleting entry:", error);
       toast.error("Failed to delete entry");
       throw error;
@@ -246,11 +250,11 @@ export function useTimeSlots(date: Date) {
       return;
     }
 
-    const oldSlots = [...slots];
+    const oldSlots = [...allSlots];
     const slotIds = slotsToDelete.map((s) => s.id);
 
     // Optimistic update
-    setSlots((prev) => prev.filter((s) => !slotIds.includes(s.id)));
+    setAllSlots((prev) => prev.filter((s) => !slotIds.includes(s.id)));
 
     try {
       const { error } = await supabase
@@ -262,7 +266,7 @@ export function useTimeSlots(date: Date) {
       toast.success(`Removed ${slotsToDelete.length} slot${slotsToDelete.length > 1 ? 's' : ''}`);
     } catch (error) {
       // Rollback on error
-      setSlots(oldSlots);
+      setAllSlots(oldSlots);
       console.error("Error deleting slots:", error);
       toast.error("Failed to delete slots");
       throw error;

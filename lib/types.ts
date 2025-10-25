@@ -2,6 +2,7 @@ export interface Project {
   id: string;
   name: string;
   color: string;
+  archived: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -36,6 +37,8 @@ export interface UserSettings {
   day_start_hour: number;
   day_end_hour: number;
   time_increment: 15 | 30 | 60;
+  stats_start_date?: string | null;
+  stats_end_date?: string | null;
   created_at?: string;
   updated_at?: string;
 }

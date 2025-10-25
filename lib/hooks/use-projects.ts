@@ -36,6 +36,7 @@ export function useProjects() {
       id: tempId,
       name,
       color,
+      archived: false,
     };
 
     // Optimistic update
@@ -121,11 +122,42 @@ export function useProjects() {
     }
   };
 
+  const toggleArchive = async (id: string) => {
+    const project = projects.find((p) => p.id === id);
+    if (!project) return;
+
+    const newArchivedState = !project.archived;
+
+    // Optimistic update
+    setProjects((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, archived: newArchivedState } : p))
+    );
+
+    try {
+      const { error } = await supabase
+        .from("projects")
+        .update({ archived: newArchivedState })
+        .eq("id", id);
+
+      if (error) throw error;
+      toast.success(newArchivedState ? "Project archived" : "Project unarchived");
+    } catch (error) {
+      // Rollback on error
+      setProjects((prev) =>
+        prev.map((p) => (p.id === id ? project : p))
+      );
+      console.error("Error toggling archive:", error);
+      toast.error("Failed to update project");
+      throw error;
+    }
+  };
+
   return {
     projects,
     isLoading,
     addProject,
     updateProject,
     deleteProject,
+    toggleArchive,
   };
 }

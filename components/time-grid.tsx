@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useCallback, Fragment } from "react"
+import { useState, useRef, Fragment } from "react"
 import { cn } from "@/lib/utils"
 import { Project, TimeEntry, TimeSlot } from "@/lib/types"
 import { Button } from "./ui/button"
@@ -81,7 +81,7 @@ export function TimeGrid({
     }
   }
 
-  const handleMouseUp = useCallback(() => {
+  const handleMouseUp = () => {
     if (isDragging && dragStart !== null && dragEnd !== null) {
       const start = Math.min(dragStart, dragEnd)
       const end = Math.max(dragStart, dragEnd) + incrementInHours
@@ -90,7 +90,7 @@ export function TimeGrid({
       setDragStart(null)
       setDragEnd(null)
     }
-  }, [isDragging, dragStart, dragEnd, incrementInHours, onBlockSelect])
+  }
 
   const isTimeSlotSelected = (time: number) => {
     if (!isDragging || dragStart === null || dragEnd === null) return false
