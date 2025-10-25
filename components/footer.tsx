@@ -1,4 +1,5 @@
-import { ChevronLeft, ChevronRight, Check, X } from "lucide-react"
+import { useState } from "react"
+import { ChevronLeft, ChevronRight, Check, X, CalendarDays } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -7,12 +8,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
 import { Project } from "@/lib/types"
 
 interface FooterProps {
   onPreviousDay: () => void
   onNextDay: () => void
   onToday: () => void
+  onDateSelect: (date: Date) => void
+  currentDate: Date
   activeProjectId: string | null
   projects: Project[]
   onProjectSelect: (projectId: string) => void
@@ -25,6 +34,8 @@ export function Footer({
   onPreviousDay,
   onNextDay,
   onToday,
+  onDateSelect,
+  currentDate,
   activeProjectId,
   projects,
   onProjectSelect,
@@ -32,6 +43,7 @@ export function Footer({
   timeIncrement,
   onIncrementChange,
 }: FooterProps) {
+  const [datePickerOpen, setDatePickerOpen] = useState(false)
   return (
     <footer className="p-3">
       <div className="max-w-4xl mx-auto bg-card border border-border rounded-2xl shadow-sm px-4 py-3">
@@ -46,14 +58,42 @@ export function Footer({
             >
               <ChevronLeft className="h-5 w-5" />
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onToday}
-              className="hover:bg-accent/50 h-10 px-3"
-            >
-              Today
-            </Button>
+            <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="hover:bg-accent/50 h-10 w-10"
+                >
+                  <CalendarDays className="h-5 w-5" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 m-3 mb-[18px]" align="center">
+                <Calendar
+                  mode="single"
+                  selected={currentDate}
+                  onSelect={(date) => {
+                    if (date) {
+                      onDateSelect(date)
+                      setDatePickerOpen(false)
+                    }
+                  }}
+                  initialFocus
+                />
+                <div className="p-3 border-t">
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => {
+                      onToday()
+                      setDatePickerOpen(false)
+                    }}
+                  >
+                    Today
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
             <Button
               variant="outline"
               size="icon"

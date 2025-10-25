@@ -84,6 +84,12 @@ export default function Home() {
     setShowLaterHours(false)
   }
 
+  const handleDateSelect = (date: Date) => {
+    setCurrentDate(date)
+    setShowEarlierHours(false)
+    setShowLaterHours(false)
+  }
+
   const handleBlockSelect = (start: number, end: number) => {
     // If active project is set, add slots for the range
     if (activeProjectId) {
@@ -183,6 +189,8 @@ export default function Home() {
         onPreviousDay={handlePreviousDay}
         onNextDay={handleNextDay}
         onToday={handleToday}
+        onDateSelect={handleDateSelect}
+        currentDate={currentDate}
         activeProjectId={activeProjectId}
         projects={projects}
         onProjectSelect={handleProjectSelect}
