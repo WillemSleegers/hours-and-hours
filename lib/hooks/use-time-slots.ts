@@ -192,8 +192,10 @@ export function useTimeSlots(date: Date) {
       // Replace temp slots with real ones
       const insertedSlots = data as TimeSlot[];
       setAllSlots((prev) => {
-        const withoutTemp = prev.filter((s) => !s.id.startsWith("temp-"));
-        return [...withoutTemp, ...insertedSlots].sort(
+        // Only remove the specific temp slots we're replacing
+        const tempIdsToRemove = new Set(tempSlots.map((t) => t.id));
+        const withoutTheseTemp = prev.filter((s) => !tempIdsToRemove.has(s.id));
+        return [...withoutTheseTemp, ...insertedSlots].sort(
           (a, b) => a.time_slot - b.time_slot
         );
       });
