@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { addDays, subDays } from "date-fns"
 import { Button } from "@/components/ui/button"
 import { TimeGrid } from "@/components/time-grid"
@@ -9,13 +10,23 @@ import { Footer } from "@/components/footer"
 import { useProjects } from "@/lib/hooks/use-projects"
 import { useTimeSlots } from "@/lib/hooks/use-time-slots"
 import { useUserSettings } from "@/lib/hooks/use-user-settings"
+import { useAuth } from "@/lib/hooks/use-auth"
 import { ChevronUp, ChevronDown } from "lucide-react"
 
 export default function Home() {
+  const router = useRouter()
+  const { user, loading: authLoading } = useAuth()
   const [currentDate, setCurrentDate] = useState(new Date())
   const [showEarlierHours, setShowEarlierHours] = useState(false)
   const [showLaterHours, setShowLaterHours] = useState(false)
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/login")
+    }
+  }, [authLoading, user, router])
 
   const { projects, isLoading: projectsLoading } = useProjects()
   const { slots, entries, addSlots, deleteEntry, deleteSlots } = useTimeSlots(currentDate)
@@ -90,7 +101,7 @@ export default function Home() {
   )
 
   // Show loading state while data is being fetched
-  if (projectsLoading || settingsLoading) {
+  if (authLoading || projectsLoading || settingsLoading) {
     return (
       <div className="h-dvh flex items-center justify-center bg-background">
         <div className="text-muted-foreground">Loading...</div>
@@ -98,18 +109,22 @@ export default function Home() {
     )
   }
 
-  // Show error state if no projects exist (likely database issue)
+  // Don't render if not authenticated (will redirect)
+  if (!user) {
+    return null
+  }
+
+  // Show welcome state if no projects exist
   if (projects.length === 0 && !projectsLoading) {
     return (
       <div className="h-dvh flex flex-col items-center justify-center bg-background p-6">
         <div className="text-center space-y-4">
-          <h2 className="text-xl font-semibold">No Projects Found</h2>
+          <h2 className="text-xl font-semibold">No projects yet</h2>
           <p className="text-muted-foreground max-w-md">
-            It looks like your database isn&apos;t set up yet. Please check your
-            Supabase configuration and ensure the tables are created.
+            Create your first project to start tracking time
           </p>
           <Button onClick={() => (window.location.href = "/projects")}>
-            Go to Projects
+            Create Project
           </Button>
         </div>
       </div>

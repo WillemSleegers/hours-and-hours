@@ -27,9 +27,13 @@ export function useUserSettings() {
         if (error) {
           // If no settings exist, create default
           if (error.code === "PGRST116") {
+            // Get current user
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error("User not authenticated");
+
             const { data: newSettings, error: insertError } = await supabase
               .from("user_settings")
-              .insert(DEFAULT_SETTINGS)
+              .insert({ ...DEFAULT_SETTINGS, user_id: user.id })
               .select()
               .single();
 

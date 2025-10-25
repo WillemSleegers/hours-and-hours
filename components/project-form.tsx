@@ -91,20 +91,38 @@ export function ProjectForm({
                 autoFocus
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Label>Color</Label>
+              <div className="flex items-center gap-4 mb-3">
+                <div
+                  className="w-16 h-16 rounded-xl border-2 border-border shadow-sm"
+                  style={{ backgroundColor: color }}
+                />
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium">Selected Color</span>
+                  <span className="text-xs text-muted-foreground font-mono">{color.toUpperCase()}</span>
+                </div>
+              </div>
               <div className="grid grid-cols-6 gap-2">
                 {PRESET_COLORS.map((presetColor) => (
                   <button
                     key={presetColor}
                     type="button"
-                    className="w-10 h-10 rounded-md border-2 transition-all hover:scale-110"
+                    className="w-10 h-10 rounded-lg border-2 transition-all hover:scale-110 relative"
                     style={{
                       backgroundColor: presetColor,
-                      borderColor: color === presetColor ? "#000" : "transparent",
+                      borderColor: color === presetColor ? presetColor : "transparent",
+                      boxShadow: color === presetColor ? `0 0 0 2px white, 0 0 0 4px ${presetColor}` : "none",
                     }}
                     onClick={() => setColor(presetColor)}
-                  />
+                    aria-label={`Select color ${presetColor}`}
+                  >
+                    {color === presetColor && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-2 h-2 bg-white rounded-full" />
+                      </div>
+                    )}
+                  </button>
                 ))}
               </div>
             </div>

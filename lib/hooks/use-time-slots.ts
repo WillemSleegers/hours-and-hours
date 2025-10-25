@@ -106,12 +106,17 @@ export function useTimeSlots(date: Date) {
       setSlots((prev) => [...prev, newSlot].sort((a, b) => a.time_slot - b.time_slot));
 
       try {
+        // Get current user
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("User not authenticated");
+
         const { data, error } = await supabase
           .from("time_slots")
           .insert({
             project_id: projectId,
             date: dateString,
             time_slot: timeSlot,
+            user_id: user.id,
           })
           .select()
           .single();
@@ -166,6 +171,10 @@ export function useTimeSlots(date: Date) {
     setSlots((prev) => [...prev, ...tempSlots].sort((a, b) => a.time_slot - b.time_slot));
 
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
       const { data, error } = await supabase
         .from("time_slots")
         .insert(
@@ -173,6 +182,7 @@ export function useTimeSlots(date: Date) {
             project_id: projectId,
             date: dateString,
             time_slot: time,
+            user_id: user.id,
           }))
         )
         .select();

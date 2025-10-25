@@ -42,9 +42,13 @@ export function useProjects() {
     setProjects((prev) => [...prev, newProject]);
 
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
       const { data, error } = await supabase
         .from("projects")
-        .insert({ name, color })
+        .insert({ name, color, user_id: user.id })
         .select()
         .single();
 

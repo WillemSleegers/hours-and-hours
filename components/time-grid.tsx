@@ -167,7 +167,7 @@ export function TimeGrid({
     // Snap to the clicked 15-min slot
     const snappedTime = snapToIncrement(time)
 
-    // Check if ANY slot in the increment range belongs to the active project
+    // Check if ALL slots in the increment range belong to the active project
     const slotsInRange: number[] = []
     for (let t = snappedTime; t < snappedTime + incrementInHours; t += 0.25) {
       slotsInRange.push(Math.round(t * 4) / 4)
@@ -189,10 +189,13 @@ export function TimeGrid({
       slotsInRange,
       existingSlotsForProject,
       incrementInHours,
+      allSlotsExist: existingSlotsForProject.length === slotsInRange.length,
     })
 
-    if (existingSlotsForProject.length > 0) {
-      // Delete just the slots in the increment range
+    // Only delete if ALL slots in the range are filled by the active project
+    // Otherwise, add the missing slots (allows partial fills)
+    if (existingSlotsForProject.length === slotsInRange.length) {
+      // All slots exist - delete them (toggle off)
       console.log(
         "Calling onSlotsDelete",
         snappedTime,
@@ -200,7 +203,7 @@ export function TimeGrid({
       )
       onSlotsDelete(snappedTime, snappedTime + incrementInHours)
     } else {
-      // Add all slots for the full increment range
+      // Some or no slots exist - add missing slots (fill or partial fill)
       console.log(
         "Calling onBlockSelect",
         snappedTime,

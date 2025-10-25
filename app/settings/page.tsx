@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,11 +13,21 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { ProjectForm } from "@/components/project-form";
 import { useProjects } from "@/lib/hooks/use-projects";
 import { useUserSettings } from "@/lib/hooks/use-user-settings";
+import { useAuth } from "@/lib/hooks/use-auth";
 
 export default function SettingsPage() {
+  const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const { projects, addProject, deleteProject } = useProjects();
   const { settings, updateSettings } = useUserSettings();
   const [showAddProject, setShowAddProject] = useState(false);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/login");
+    }
+  }, [authLoading, user, router]);
 
   const handleAddProject = async (name: string, color: string) => {
     await addProject(name, color);
@@ -31,6 +42,20 @@ export default function SettingsPage() {
       await deleteProject(projectId);
     }
   };
+
+  // Show loading while checking auth
+  if (authLoading) {
+    return (
+      <div className="h-dvh flex items-center justify-center bg-background">
+        <div className="text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
+
+  // Don't render if not authenticated (will redirect)
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-background">
