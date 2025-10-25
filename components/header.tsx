@@ -1,9 +1,8 @@
 "use client"
 
-import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { format } from "date-fns"
-import { BarChart3, Settings, LogOut, User } from "lucide-react"
+import { BarChart3, Settings, LogOut, Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -51,43 +50,40 @@ export function Header({ totalHours, currentDate }: HeaderProps) {
           </div>
           <div className="text-center">
             <div className="text-sm font-semibold">
-              {format(currentDate, "EEEE, MMMM d, yyyy")}
+              {format(currentDate, "EEE, MMM d")}
             </div>
           </div>
-          <div className="flex items-center gap-1">
-            <Link href="/projects">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8">
-                <BarChart3 className="h-4 w-4" />
+                <Menu className="h-4 w-4" />
               </Button>
-            </Link>
-            <Link href="/settings">
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <Settings className="h-4 w-4" />
-              </Button>
-            </Link>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <User className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">Account</p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      {user?.email}
-                    </p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sign out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">Account</p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {user?.email}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => router.push("/projects")}>
+                <BarChart3 className="mr-2 h-4 w-4" />
+                Projects
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push("/settings")}>
+                <Settings className="mr-2 h-4 w-4" />
+                Settings
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleSignOut}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>
