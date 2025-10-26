@@ -10,6 +10,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { useProjects } from "@/lib/hooks/use-projects";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { useUserSettings } from "@/lib/hooks/use-user-settings";
@@ -31,6 +33,7 @@ export default function StatisticsPage() {
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [earliestDate, setEarliestDate] = useState<Date | null>(null);
   const [latestDate, setLatestDate] = useState<Date | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -118,7 +121,15 @@ export default function StatisticsPage() {
     return projectStats;
   };
 
-  const stats = getFilteredStats();
+  const allStats = getFilteredStats();
+
+  // Filter out archived projects if toggle is off
+  const stats = showArchived
+    ? allStats
+    : allStats.filter(stat => {
+        const project = projects.find(p => p.id === stat.projectId);
+        return project && !project.archived;
+      });
 
   const handleStartDateChange = (date: Date | undefined) => {
     setStartDate(date);
@@ -171,16 +182,21 @@ export default function StatisticsPage() {
 
       <main className="container mx-auto px-4 py-6">
         {/* Date Range Filter */}
-        <div className="mb-4 flex flex-wrap items-center gap-2">
+        <div className="mb-4 flex flex-wrap items-center gap-3">
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" className="gap-2">
                 <CalendarIcon className="h-4 w-4" />
-                {startDate
-                  ? format(startDate, "MMM d, yyyy")
-                  : earliestDate
-                  ? format(earliestDate, "MMM d, yyyy")
-                  : "Start date"}
+                {startDate ? (
+                  format(startDate, "MMM d, yyyy")
+                ) : earliestDate ? (
+                  <span className="flex items-center gap-1">
+                    {format(earliestDate, "MMM d, yyyy")}
+                    <span className="text-xs text-muted-foreground">(earliest)</span>
+                  </span>
+                ) : (
+                  "Start date"
+                )}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
@@ -199,11 +215,16 @@ export default function StatisticsPage() {
             <PopoverTrigger asChild>
               <Button variant="outline" className="gap-2">
                 <CalendarIcon className="h-4 w-4" />
-                {endDate
-                  ? format(endDate, "MMM d, yyyy")
-                  : latestDate
-                  ? format(latestDate, "MMM d, yyyy")
-                  : "End date"}
+                {endDate ? (
+                  format(endDate, "MMM d, yyyy")
+                ) : latestDate ? (
+                  <span className="flex items-center gap-1">
+                    {format(latestDate, "MMM d, yyyy")}
+                    <span className="text-xs text-muted-foreground">(latest)</span>
+                  </span>
+                ) : (
+                  "End date"
+                )}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
@@ -222,6 +243,21 @@ export default function StatisticsPage() {
               Reset
             </Button>
           )}
+
+          {/* Spacer to push toggle to the right on larger screens */}
+          <div className="flex-1 min-w-0" />
+
+          {/* Include Archived Toggle */}
+          <div className="flex items-center gap-2">
+            <Switch
+              id="include-archived"
+              checked={showArchived}
+              onCheckedChange={setShowArchived}
+            />
+            <Label htmlFor="include-archived" className="text-sm cursor-pointer">
+              Include archived
+            </Label>
+          </div>
         </div>
 
         <Card className="mb-4">

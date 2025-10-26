@@ -63,6 +63,7 @@ export function useTimeSlots(date: Date) {
           start_time: slot.time_slot,
           end_time: slot.time_slot + 0.25,
           slot_ids: [slot.id],
+          note: slot.note,
         };
       }
     }
@@ -255,10 +256,59 @@ export function useTimeSlots(date: Date) {
     const oldSlots = [...allSlots];
     const slotIds = slotsToDelete.map((s) => s.id);
 
-    // Optimistic update
-    setAllSlots((prev) => prev.filter((s) => !slotIds.includes(s.id)));
+    // Check if we're deleting the first slot of any entry that has a note
+    // If so, transfer the note to the next slot in the same entry
+    const noteTransfers: Array<{ fromId: string; toId: string; note: string }> = [];
+
+    for (const entry of entries) {
+      const firstSlot = slots.find((s) => s.id === entry.id);
+
+      // Check if the first slot is being deleted and has a note
+      if (firstSlot && slotIds.includes(firstSlot.id) && firstSlot.note) {
+        // Find the next slot in this entry that's NOT being deleted
+        const nextSlot = slots.find(
+          (s) =>
+            entry.slot_ids.includes(s.id) &&
+            s.time_slot > firstSlot.time_slot &&
+            !slotIds.includes(s.id)
+        );
+
+        if (nextSlot) {
+          noteTransfers.push({
+            fromId: firstSlot.id,
+            toId: nextSlot.id,
+            note: firstSlot.note,
+          });
+        }
+      }
+    }
+
+    // Optimistic update - delete slots and transfer notes
+    setAllSlots((prev) => {
+      let updated = prev.filter((s) => !slotIds.includes(s.id));
+
+      // Apply note transfers
+      for (const transfer of noteTransfers) {
+        updated = updated.map((s) =>
+          s.id === transfer.toId ? { ...s, note: transfer.note } : s
+        );
+      }
+
+      return updated;
+    });
 
     try {
+      // Transfer notes first (before deleting)
+      for (const transfer of noteTransfers) {
+        const { error: transferError } = await supabase
+          .from("time_slots")
+          .update({ note: transfer.note })
+          .eq("id", transfer.toId);
+
+        if (transferError) throw transferError;
+      }
+
+      // Then delete the slots
       const { error } = await supabase
         .from("time_slots")
         .delete()
@@ -275,6 +325,40 @@ export function useTimeSlots(date: Date) {
     }
   };
 
+  const updateNote = async (entryId: string, note: string) => {
+    // Find the entry to update its first slot
+    const entry = entries.find((e) => e.id === entryId);
+    if (!entry) {
+      return;
+    }
+
+    const oldSlots = [...allSlots];
+
+    // Convert empty string to null
+    const noteValue = note.trim() === "" ? null : note.trim();
+
+    // Optimistic update - update the first slot (which has id === entryId)
+    setAllSlots((prev) =>
+      prev.map((s) => (s.id === entryId ? { ...s, note: noteValue } : s))
+    );
+
+    try {
+      const { error } = await supabase
+        .from("time_slots")
+        .update({ note: noteValue })
+        .eq("id", entryId);
+
+      if (error) throw error;
+      toast.success(noteValue ? "Note saved" : "Note cleared");
+    } catch (error) {
+      // Rollback on error
+      setAllSlots(oldSlots);
+      console.error("Error updating note:", error);
+      toast.error("Failed to save note");
+      throw error;
+    }
+  };
+
   return {
     slots,
     entries,
@@ -283,5 +367,6 @@ export function useTimeSlots(date: Date) {
     addSlots,
     deleteEntry,
     deleteSlots,
+    updateNote,
   };
 }

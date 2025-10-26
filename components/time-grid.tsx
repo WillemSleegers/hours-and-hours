@@ -4,7 +4,8 @@ import { useState, useRef, Fragment } from "react"
 import { cn } from "@/lib/utils"
 import { Project, TimeEntry, TimeSlot } from "@/lib/types"
 import { Button } from "./ui/button"
-import { XIcon } from "lucide-react"
+import { XIcon, StickyNote } from "lucide-react"
+import { NoteDialog } from "./note-dialog"
 
 interface TimeGridProps {
   slots: TimeSlot[]
@@ -13,6 +14,7 @@ interface TimeGridProps {
   onBlockSelect: (startTime: number, endTime: number) => void
   onEntryDelete: (entryId: string) => void
   onSlotsDelete: (startTime: number, endTime: number) => void
+  onNoteUpdate: (entryId: string, note: string) => void
   activeProjectId: string | null
   dayStartHour?: number
   dayEndHour?: number
@@ -26,6 +28,7 @@ export function TimeGrid({
   onBlockSelect,
   onEntryDelete,
   onSlotsDelete,
+  onNoteUpdate,
   activeProjectId,
   dayStartHour = 0,
   dayEndHour = 24,
@@ -36,6 +39,8 @@ export function TimeGrid({
   const [dragEnd, setDragEnd] = useState<number | null>(null)
   const [hoveredTime, setHoveredTime] = useState<number | null>(null)
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null)
+  const [noteDialogOpen, setNoteDialogOpen] = useState(false)
+  const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null)
   const gridRef = useRef<HTMLDivElement>(null)
 
   // Always display 15-minute slots for visual precision
@@ -150,17 +155,27 @@ export function TimeGrid({
     return { isStart, isEnd }
   }
 
+  const handleNoteEdit = (entry: TimeEntry) => {
+    setEditingEntry(entry)
+    setNoteDialogOpen(true)
+  }
+
+  const handleNoteSave = (note: string) => {
+    if (editingEntry) {
+      onNoteUpdate(editingEntry.id, note)
+    }
+  }
+
   // Handle slot click - toggle slots (add if empty, remove if filled)
   const handleSlotClick = (time: number, entry?: TimeEntry) => {
-    // If no active project and clicking on an entry, toggle selection for deletion
+    // If no active project and clicking on an entry, open note dialog
     if (!activeProjectId && entry) {
-      setSelectedEntryId(selectedEntryId === entry.id ? null : entry.id)
+      handleNoteEdit(entry)
       return
     }
 
-    // If no active project and no entry, clear selection
+    // If no active project and no entry, do nothing
     if (!activeProjectId) {
-      setSelectedEntryId(null)
       return
     }
 
@@ -298,9 +313,14 @@ export function TimeGrid({
             >
               {entry && isEntryStart && (
                 <>
-                  <span className="font-semibold tracking-tight pointer-events-none">
-                    {getProjectName(entry.project_id)}
-                  </span>
+                  <div className="flex items-center gap-1.5 pointer-events-none">
+                    <span className="font-semibold tracking-tight">
+                      {getProjectName(entry.project_id)}
+                    </span>
+                    {entry.note && (
+                      <StickyNote className="h-3.5 w-3.5 opacity-80" />
+                    )}
+                  </div>
                   {selectedEntryId === entry.id && !activeProjectId && (
                     <Button
                       onClick={(e) => {
@@ -329,6 +349,14 @@ export function TimeGrid({
         </span>
       </div>
       <div className="border-t border-border/30" />
+
+      <NoteDialog
+        open={noteDialogOpen}
+        onClose={() => setNoteDialogOpen(false)}
+        onSave={handleNoteSave}
+        initialNote={editingEntry?.note}
+        projectName={editingEntry ? getProjectName(editingEntry.project_id) : ""}
+      />
     </div>
   )
 }

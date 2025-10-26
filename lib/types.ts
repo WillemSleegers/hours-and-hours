@@ -12,6 +12,7 @@ export interface TimeSlot {
   project_id: string;
   date: string;
   time_slot: number; // The 15-minute slot (e.g., 9.0, 9.25, 9.5, 9.75, 10.0)
+  note?: string | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -24,6 +25,7 @@ export interface TimeEntry {
   start_time: number;
   end_time: number;
   slot_ids: string[]; // Track which slots belong to this visual entry
+  note?: string | null; // Note from the first slot
 }
 
 export interface TimeBlock {

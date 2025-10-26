@@ -1,5 +1,123 @@
 import { createClient } from '@supabase/supabase-js';
-import { Database } from './database.types';
+
+// Database types - can be regenerated with Supabase CLI:
+// npx supabase gen types typescript --project-id [project-id] > lib/supabase.ts
+
+type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+interface Database {
+  public: {
+    Tables: {
+      projects: {
+        Row: {
+          id: string
+          name: string
+          color: string
+          archived: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          color: string
+          archived?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          color?: string
+          archived?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      time_slots: {
+        Row: {
+          id: string
+          project_id: string
+          date: string
+          time_slot: number
+          note: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          project_id: string
+          date: string
+          time_slot: number
+          note?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          project_id?: string
+          date?: string
+          time_slot?: number
+          note?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_slots_project_id_fkey"
+            columns: ["project_id"]
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      user_settings: {
+        Row: {
+          id: string
+          day_start_hour: number
+          day_end_hour: number
+          time_increment: number
+          stats_start_date: string | null
+          stats_end_date: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          day_start_hour?: number
+          day_end_hour?: number
+          time_increment?: number
+          stats_start_date?: string | null
+          stats_end_date?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          day_start_hour?: number
+          day_end_hour?: number
+          time_increment?: number
+          stats_start_date?: string | null
+          stats_end_date?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+    }
+    Views: Record<string, never>
+    Functions: Record<string, never>
+    Enums: Record<string, never>
+    CompositeTypes: Record<string, never>
+  }
+}
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

@@ -4,20 +4,24 @@ An intuitive time tracking app focused on simplicity and ease of use.
 
 ## Features
 
-- **Daily View**: Drag to select time blocks and assign them to projects
+- **Daily View**: Click or drag to select time blocks and assign them to projects
+- **Notes on Entries**: Add notes to time entries to track what you worked on
 - **Configurable Time Tracking**: Choose between 15-minute, 30-minute, or 1-hour increments
 - **Flexible Day Hours**: Set custom start and end times for your workday
-- **Project Overview**: View aggregated hours across all your projects
-- **Project Management**: Create, edit, and delete projects with custom colors
+- **Statistics Page**: View aggregated hours across all projects with date range filtering
+- **Project Management**: Create, edit, archive, and delete projects with custom colors
+- **Authentication**: Sign in with GitHub or magic email links
 - **Light/Dark Mode**: Toggle between light and dark themes
 - **Optimistic UI**: All changes happen instantly with async Supabase sync
 - **Responsive Design**: Works seamlessly on desktop and mobile
+- **Smart Time Grid**: Automatically expands to show earlier/later hours when needed
 
 ## Tech Stack
 
-- **Framework**: Next.js 15 with React 19
-- **Styling**: Tailwind CSS with shadcn/ui components
+- **Framework**: Next.js 16 with React 19 and React Compiler
+- **Styling**: Tailwind CSS 4 with shadcn/ui components
 - **Database**: Supabase (PostgreSQL)
+- **Authentication**: Supabase Auth (GitHub OAuth + Magic Links)
 - **Type Safety**: TypeScript
 - **Date Handling**: date-fns
 
@@ -43,7 +47,8 @@ npm install
 
 3. Set up Supabase:
    - Create a new project at [supabase.com](https://supabase.com)
-   - Run the SQL schema from `lib/schema.sql` in your Supabase SQL editor
+   - Run the migrations from `supabase/migrations/` in order in your Supabase SQL editor
+   - Set up Row Level Security (RLS) policies to ensure users can only access their own data
    - Copy your project URL and anon key
 
 4. Configure environment variables:
@@ -70,37 +75,57 @@ The app uses three main tables:
 
 ### Projects
 - `id`: UUID (primary key)
+- `user_id`: UUID (foreign key to auth.users)
 - `name`: Text (project name)
 - `color`: Text (hex color code)
+- `archived`: Boolean (whether project is archived)
 - `created_at`, `updated_at`: Timestamps
 
-### Time Entries
+### Time Slots
 - `id`: UUID (primary key)
+- `user_id`: UUID (foreign key to auth.users)
 - `project_id`: UUID (foreign key to projects)
 - `date`: Date (the day the hours were worked)
-- `start_time`: Decimal (fractional hour, e.g., 9.5 for 9:30 AM)
-- `end_time`: Decimal (fractional hour, e.g., 17.25 for 5:15 PM)
+- `time_slot`: Decimal (fractional hour in 15-min increments, e.g., 9.0, 9.25, 9.5, 9.75)
+- `note`: Text (optional note for the time slot)
 - `created_at`, `updated_at`: Timestamps
 
+**Note**: The app uses 15-minute slots as the atomic unit. Consecutive slots for the same project are visually grouped into entries in the UI, but stored as individual 15-minute slots in the database.
+
 ### User Settings
-- `id`: UUID (primary key)
+- `id`: UUID (primary key, matches auth.users.id)
 - `day_start_hour`: Integer (0-23, when your day starts)
 - `day_end_hour`: Integer (1-24, when your day ends)
-- `time_increment`: Integer (15, 30, or 60 minutes)
+- `time_increment`: Integer (15, 30, or 60 minutes - controls selection granularity)
+- `stats_start_date`: Date (saved filter for statistics page)
+- `stats_end_date`: Date (saved filter for statistics page)
 - `created_at`, `updated_at`: Timestamps
 
 ## Usage
 
-1. **Configure Settings**: Go to Settings to:
+1. **Sign In**: Use GitHub OAuth or magic email link to authenticate
+
+2. **Create Projects**: Go to Projects page to:
+   - Create projects with custom names and colors
+   - Archive projects you're no longer working on
+   - Edit or delete existing projects
+
+3. **Configure Settings**: Go to Settings to:
    - Set your preferred day start and end times
-   - Choose time increment (15 min, 30 min, or 1 hour)
-   - Create projects with names and colors
+   - Toggle between light and dark themes
 
-2. **Track Time**: On the daily view, click and drag to select time blocks, then choose a project
+4. **Track Time**: On the daily view:
+   - Select a project from the footer dropdown
+   - Click or drag to select time blocks (15-min, 30-min, or 1-hour increments)
+   - Click existing entries to add notes about what you worked on
+   - Toggle time increment in the footer to change selection granularity
 
-3. **Navigate Days**: Use the arrow buttons or "Today" button to switch between days
+5. **Navigate Days**: Use the arrow buttons or calendar picker to switch between days
 
-4. **View Analytics**: Check the Projects page to see your total hours per project
+6. **View Statistics**: Check the Statistics page to:
+   - See total hours across all projects
+   - Filter by date range
+   - View per-project breakdowns
 
 ## Development
 
@@ -127,11 +152,11 @@ npm start
 
 - Week/month views
 - Export data to CSV/PDF
-- Time entry editing and deletion
-- Project archiving
 - Keyboard shortcuts
 - Recurring time blocks
-- Notes/descriptions for time entries
+- Time entry templates
+- Mobile app (React Native)
+- Browser extension for quick time tracking
 
 ## Deploy on Vercel
 

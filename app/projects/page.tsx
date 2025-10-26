@@ -38,11 +38,15 @@ export default function ProjectsPage() {
   };
 
   const handleDeleteProject = async (projectId: string, projectName: string) => {
-    if (
-      confirm(
-        `Are you sure you want to delete "${projectName}"? This will also delete all associated time entries.`
-      )
-    ) {
+    const confirmMessage =
+      `⚠️ Delete "${projectName}"?\n\n` +
+      `This will permanently delete:\n` +
+      `• The project\n` +
+      `• All time slots for this project\n` +
+      `• All notes associated with these time slots\n\n` +
+      `This action cannot be undone.`;
+
+    if (confirm(confirmMessage)) {
       await deleteProject(projectId);
     }
   };
