@@ -121,11 +121,6 @@
   - Footer-based controls in thumb zone
   - Project dropdown optimized for mobile
 
-## Bugs
-
-- [ ] **Hover effect without project selection** - Remove the hover effect on the grid when no project is selected. Currently the mouse turns into a pointer (hand) when no project is selected.
-- [ ] **Fix 'Failed to delete entry' messages** - Adding slots returns a 'Failed to delete entry' message. Adding sequential slots doesn't work and actually deletes previously selected slots.
-
 ## Future Considerations
 
 - [ ] **Multi-user Support** - User authentication and per-user data

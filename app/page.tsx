@@ -138,11 +138,11 @@ export default function Home() {
   }
 
   return (
-    <div className="h-dvh flex flex-col bg-background">
+    <div className="min-h-dvh bg-background pb-[88px]">
       <Header totalHours={totalHours} currentDate={currentDate} />
 
-      {/* Scrollable time grid - takes up available space */}
-      <main className="flex-1 overflow-y-auto">
+      {/* Time grid */}
+      <main className="px-3">
         <div className="container mx-auto max-w-4xl">
           {canShowEarlier && !showEarlierHours && (
             <div className="flex justify-center">
@@ -186,21 +186,23 @@ export default function Home() {
         </div>
       </main>
 
-      <Footer
-        onPreviousDay={handlePreviousDay}
-        onNextDay={handleNextDay}
-        onToday={handleToday}
-        onDateSelect={handleDateSelect}
-        currentDate={currentDate}
-        activeProjectId={activeProjectId}
-        projects={projects}
-        onProjectSelect={handleProjectSelect}
-        onClearProject={() => setActiveProjectId(null)}
-        timeIncrement={settings.time_increment}
-        onIncrementChange={(increment) => {
-          updateSettings({ time_increment: increment })
-        }}
-      />
+      <div className="fixed bottom-0 left-0 right-0">
+        <Footer
+          onPreviousDay={handlePreviousDay}
+          onNextDay={handleNextDay}
+          onToday={handleToday}
+          onDateSelect={handleDateSelect}
+          currentDate={currentDate}
+          activeProjectId={activeProjectId}
+          projects={projects}
+          onProjectSelect={handleProjectSelect}
+          onClearProject={() => setActiveProjectId(null)}
+          timeIncrement={settings.time_increment}
+          onIncrementChange={(increment) => {
+            updateSettings({ time_increment: increment })
+          }}
+        />
+      </div>
     </div>
   )
 }

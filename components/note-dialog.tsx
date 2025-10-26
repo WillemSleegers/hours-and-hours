@@ -4,14 +4,12 @@ import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 
 interface NoteDialogProps {
   open: boolean;
@@ -45,25 +43,17 @@ export function NoteDialog({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add Note</DialogTitle>
-          <DialogDescription>
-            Add a note for {projectName}
-          </DialogDescription>
+          <DialogTitle>{projectName}</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="note">Note</Label>
-            <Textarea
-              id="note"
-              placeholder="What did you work on?"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              rows={4}
-              autoFocus
-            />
-          </div>
-        </div>
-        <DialogFooter>
+        <Textarea
+          id="note"
+          placeholder="What did you work on?"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          rows={4}
+          autoFocus
+        />
+        <DialogFooter className="gap-2">
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>

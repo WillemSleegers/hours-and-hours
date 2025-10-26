@@ -223,7 +223,7 @@ export function TimeGrid({
       ref={gridRef}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
-      className="select-none grid grid-cols-[4rem_1fr] gap-x-2 py-2"
+      className="select-none grid grid-cols-[auto_1fr] gap-x-2 py-2"
     >
       {timeSlots.map((time) => {
         const entry = getEntryForTimeSlot(time)
@@ -248,7 +248,7 @@ export function TimeGrid({
         return (
           <Fragment key={time}>
             {/* Time label */}
-            <div className="flex items-start justify-end pr-2">
+            <div className="flex items-start justify-end pr-1">
               <span className="text-xs font-medium text-muted-foreground/70 -translate-y-1/2">
                 {formatTime(time)}
               </span>
@@ -257,7 +257,7 @@ export function TimeGrid({
             {/* Time slot */}
             <div
               className={cn(
-                "relative flex items-center justify-between px-3 mx-0.5 border-t border-border/30",
+                "relative flex items-center justify-between px-3 border-t border-border/30",
                 "transition-all duration-150 ease-in-out",
                 slotHeight,
                 (activeProjectId || entry) && "cursor-pointer",
