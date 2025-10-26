@@ -138,8 +138,10 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-dvh bg-background pb-[88px]">
-      <Header totalHours={totalHours} currentDate={currentDate} />
+    <div className="min-h-dvh bg-background pt-[68px] pb-[88px]">
+      <div className="fixed top-0 left-0 right-0 z-10">
+        <Header totalHours={totalHours} currentDate={currentDate} />
+      </div>
 
       {/* Time grid */}
       <main className="px-3">
