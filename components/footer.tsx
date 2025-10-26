@@ -49,7 +49,7 @@ export function Footer({
   const activeProjects = projects.filter((p) => !p.archived)
   return (
     <footer className="p-3">
-      <div className="max-w-4xl mx-auto bg-card border border-border rounded-2xl shadow-sm px-4 py-3">
+      <div className="max-w-4xl mx-auto bg-card border border-border rounded-2xl shadow-sm px-3 py-2">
         <div className="flex flex-wrap items-center gap-3">
           {/* Row 1 Left: Date navigation */}
           <div className="flex items-center gap-2">

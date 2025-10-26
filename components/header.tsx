@@ -38,19 +38,20 @@ export function Header({ totalHours, currentDate }: HeaderProps) {
 
   return (
     <header className="p-3">
-      <div className="max-w-4xl mx-auto bg-card border border-border rounded-2xl shadow-sm px-4 py-3">
+      <div className="max-w-4xl mx-auto bg-card border border-border rounded-2xl shadow-sm px-3 py-2">
         <div className="flex items-center justify-between">
-          <button
+          <Button
+            variant="ghost"
             onClick={() => router.push(`/day?date=${format(currentDate, "yyyy-MM-dd")}`)}
-            className="flex items-baseline gap-1.5 hover:opacity-80 transition-opacity"
+            className="h-auto px-3 py-1.5 hover:bg-accent flex items-end gap-1.5"
           >
-            <span className="text-xl font-bold tabular-nums">
+            <span className="text-xl font-bold tabular-nums leading-none">
               {totalHours.toFixed(1)}
             </span>
-            <span className="text-xs text-muted-foreground font-medium">
+            <span className="text-xs text-muted-foreground font-medium leading-none pb-0.5">
               hrs today
             </span>
-          </button>
+          </Button>
           <div className="text-center">
             <div className="text-sm font-semibold">
               {format(currentDate, "EEE, MMM d")}
