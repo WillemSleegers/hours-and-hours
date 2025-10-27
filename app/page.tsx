@@ -29,7 +29,7 @@ export default function Home() {
   }, [authLoading, user, router])
 
   const { projects, isLoading: projectsLoading } = useProjects()
-  const { slots, entries, addSlots, deleteEntry, deleteSlots, updateNote } = useTimeSlots(currentDate)
+  const { slots, entries, addSlots, deleteEntry, updateNote } = useTimeSlots(currentDate)
   const {
     settings,
     updateSettings,
@@ -165,7 +165,6 @@ export default function Home() {
             projects={projects}
             onBlockSelect={handleBlockSelect}
             onEntryDelete={deleteEntry}
-            onSlotsDelete={deleteSlots}
             onNoteUpdate={updateNote}
             activeProjectId={activeProjectId}
             dayStartHour={displayStartHour}

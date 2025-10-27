@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, Fragment } from "react"
+import { useState, useRef, Fragment, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { Project, TimeEntry, TimeSlot } from "@/lib/types"
 import { Button } from "./ui/button"
@@ -13,7 +13,6 @@ interface TimeGridProps {
   projects: Project[]
   onBlockSelect: (startTime: number, endTime: number) => void
   onEntryDelete: (entryId: string) => void
-  onSlotsDelete: (startTime: number, endTime: number) => void
   onNoteUpdate: (entryId: string, note: string) => void
   activeProjectId: string | null
   dayStartHour?: number
@@ -27,7 +26,6 @@ export function TimeGrid({
   projects,
   onBlockSelect,
   onEntryDelete,
-  onSlotsDelete,
   onNoteUpdate,
   activeProjectId,
   dayStartHour = 0,
@@ -37,11 +35,24 @@ export function TimeGrid({
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState<number | null>(null)
   const [dragEnd, setDragEnd] = useState<number | null>(null)
-  const [hoveredTime, setHoveredTime] = useState<number | null>(null)
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null)
   const [noteDialogOpen, setNoteDialogOpen] = useState(false)
   const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null)
   const gridRef = useRef<HTMLDivElement>(null)
+
+  // Handle click outside to close action buttons
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (gridRef.current && !gridRef.current.contains(event.target as Node)) {
+        setSelectedEntryId(null)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [])
 
   // Always display 15-minute slots for visual precision
   const displayIncrementInHours = 0.25 // 15 minutes
@@ -132,29 +143,6 @@ export function TimeGrid({
   // All 15-minute slots have the same height
   const slotHeight = "h-10"
 
-  // Check if a slot should be highlighted based on hover and increment
-  // When hovering, highlight the full increment range (e.g., 2 slots for 30min)
-  const isSlotHovered = (time: number) => {
-    if (!hoveredTime || isDragging) return false
-    // Only show hover on empty slots when there's an active project
-    // OR show hover on any slot (including entries) when there's an active project
-    if (!activeProjectId) return false
-    // Snap the hovered time to start of increment
-    const snappedHover = snapToIncrement(hoveredTime)
-    // Check if this slot is in the increment range
-    return time >= snappedHover && time < snappedHover + incrementInHours
-  }
-
-  // Check if this is the start or end of the hover range (for rounded corners)
-  const getHoverBoundary = (time: number) => {
-    if (!isSlotHovered(time)) return { isStart: false, isEnd: false }
-    const snappedHover = snapToIncrement(hoveredTime!)
-    const isStart = time === snappedHover
-    const isEnd =
-      time >= snappedHover + incrementInHours - displayIncrementInHours
-    return { isStart, isEnd }
-  }
-
   const handleNoteEdit = (entry: TimeEntry) => {
     setEditingEntry(entry)
     setNoteDialogOpen(true)
@@ -166,46 +154,37 @@ export function TimeGrid({
     }
   }
 
-  // Handle slot click - toggle slots (add if empty, remove if filled)
-  const handleSlotClick = (time: number, entry?: TimeEntry) => {
-    // If no active project and clicking on an entry, open note dialog
-    if (!activeProjectId && entry) {
-      handleNoteEdit(entry)
-      return
-    }
+  // Handle slot click - add slots or show action buttons
+  const handleSlotClick = (time: number) => {
+    // Always recalculate entry fresh to avoid stale closures
+    const entry = getEntryForTimeSlot(time)
 
-    // If no active project and no entry, do nothing
+    // If no active project
     if (!activeProjectId) {
+      if (entry) {
+        // Show buttons for any entry when no project selected
+        setSelectedEntryId(selectedEntryId === entry.id ? null : entry.id)
+      }
       return
     }
 
-    // Snap to the clicked 15-min slot
+    // Active project IS selected - check if this slot is already filled
     const snappedTime = snapToIncrement(time)
-
-    // Check if ALL slots in the increment range belong to the active project
-    const slotsInRange: number[] = []
-    for (let t = snappedTime; t < snappedTime + incrementInHours; t += 0.25) {
-      slotsInRange.push(Math.round(t * 4) / 4)
-    }
-
-    const existingSlotsForProject = slotsInRange.filter((t) =>
-      slots.some(
-        (s) =>
-          s.time_slot === t &&
-          s.project_id === activeProjectId &&
-          !s.id.startsWith("temp-") // Ignore temp slots
-      )
+    const slotAlreadyFilled = slots.some(
+      (s) =>
+        s.time_slot === snappedTime &&
+        !s.id.startsWith("temp-")
     )
 
-    // Only delete if ALL slots in the range are filled by the active project
-    // Otherwise, add the missing slots (allows partial fills)
-    if (existingSlotsForProject.length === slotsInRange.length) {
-      // All slots exist - delete them (toggle off)
-      onSlotsDelete(snappedTime, snappedTime + incrementInHours)
-    } else {
-      // Some or no slots exist - add missing slots (fill or partial fill)
-      onBlockSelect(snappedTime, snappedTime + incrementInHours)
+    if (entry && slotAlreadyFilled) {
+      // Clicking on an already-filled slot - show buttons
+      setSelectedEntryId(selectedEntryId === entry.id ? null : entry.id)
+      return
     }
+
+    // Clicking on empty slot or temp slot - clear selection and add slots
+    setSelectedEntryId(null)
+    onBlockSelect(snappedTime, snappedTime + incrementInHours)
   }
 
   const getProjectColor = (projectId: string) => {
@@ -228,9 +207,6 @@ export function TimeGrid({
       {timeSlots.map((time) => {
         const entry = getEntryForTimeSlot(time)
         const isSelected = isTimeSlotSelected(time)
-        const isHovered = isSlotHovered(time)
-        const { isStart: isHoverStart, isEnd: isHoverEnd } =
-          getHoverBoundary(time)
         const { isStart: isSelectionStart, isEnd: isSelectionEnd } =
           getSelectionBoundary(time)
         const { isStart: isEntryStart, isEnd: isEntryEnd } = entry
@@ -261,13 +237,6 @@ export function TimeGrid({
                 "transition-all duration-150 ease-in-out",
                 slotHeight,
                 (activeProjectId || entry) && "cursor-pointer",
-                // Empty slot hover (for adding)
-                !entry && isHovered && [
-                  "bg-accent/30",
-                  getRoundedClasses(isHoverStart, isHoverEnd),
-                ],
-                // Entry hover (for removing) - darken to indicate deletion
-                entry && isHovered && "brightness-75",
                 // Selection state (dragging)
                 isSelected && [
                   "bg-primary/8",
@@ -277,12 +246,7 @@ export function TimeGrid({
                 entry && [
                   "text-white font-medium text-sm",
                   getRoundedClasses(isEntryStart, isEntryEnd),
-                ],
-                // Entry selection (for delete button)
-                entry &&
-                  selectedEntryId === entry.id &&
-                  !activeProjectId &&
-                  "brightness-90"
+                ]
               )}
               style={{
                 backgroundColor: entry
@@ -290,26 +254,8 @@ export function TimeGrid({
                   : undefined,
               }}
               onMouseDown={() => !entry && handleMouseDown(time)}
-              onPointerEnter={(e) => {
-                // Only track hover for mouse input, not touch
-                if (e.pointerType === 'mouse' && (activeProjectId || entry)) {
-                  handleMouseEnter(time)
-                  setHoveredTime(time)
-                }
-              }}
-              onPointerMove={(e) => {
-                // Only track hover for mouse input, not touch
-                if (e.pointerType === 'mouse' && (activeProjectId || entry)) {
-                  setHoveredTime(time)
-                }
-              }}
-              onPointerLeave={(e) => {
-                // Only clear hover for mouse input
-                if (e.pointerType === 'mouse') {
-                  setHoveredTime(null)
-                }
-              }}
-              onClick={() => handleSlotClick(time, entry || undefined)}
+              onMouseEnter={() => handleMouseEnter(time)}
+              onClick={() => handleSlotClick(time)}
             >
               {entry && isEntryStart && (
                 <>
@@ -321,19 +267,34 @@ export function TimeGrid({
                       <StickyNote className="h-3.5 w-3.5 opacity-80" />
                     )}
                   </div>
-                  {selectedEntryId === entry.id && !activeProjectId && (
-                    <Button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onEntryDelete(entry.id)
-                        setSelectedEntryId(null)
-                      }}
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 p-0"
-                    >
-                      <XIcon className="h-4 w-4" />
-                    </Button>
+                  {selectedEntryId === entry.id && (
+                    <div className="flex items-center gap-1 pointer-events-auto">
+                      <Button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleNoteEdit(entry)
+                        }}
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0"
+                        title="Add/edit note"
+                      >
+                        <StickyNote className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onEntryDelete(entry.id)
+                          setSelectedEntryId(null)
+                        }}
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0"
+                        title="Delete entry"
+                      >
+                        <XIcon className="h-4 w-4" />
+                      </Button>
+                    </div>
                   )}
                 </>
               )}
