@@ -188,7 +188,7 @@ export default function Home() {
         </div>
       </main>
 
-      <div className="fixed left-0 right-0" style={{ bottom: 'env(safe-area-inset-bottom, 0px)' }}>
+      <div className="fixed bottom-0 left-0 right-0">
         <Footer
           onPreviousDay={handlePreviousDay}
           onNextDay={handleNextDay}
