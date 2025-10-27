@@ -17,6 +17,27 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Hours and Hours",
   description: "Intuitive time tracking for your projects",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Hours",
+  },
+  icons: {
+    apple: [
+      { url: "/apple-icon-180.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
+  manifest: "/manifest.json",
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+  ],
 };
 
 export default function RootLayout({
