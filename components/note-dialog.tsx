@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import {
   Sheet,
   SheetContent,
@@ -27,37 +27,20 @@ export function NoteDialog({
   projectName,
 }: NoteDialogProps) {
   const [note, setNote] = useState(initialNote || "");
-  const scrollPositionRef = useRef(0);
 
   useEffect(() => {
     setNote(initialNote || "");
   }, [initialNote]);
 
-  // Save scroll position when opening
-  useEffect(() => {
-    if (open) {
-      scrollPositionRef.current = window.scrollY;
-    }
-  }, [open]);
-
-  const handleClose = () => {
-    // Restore scroll position with smooth animation
-    window.scrollTo({
-      top: scrollPositionRef.current,
-      behavior: 'smooth'
-    });
-    onClose();
-  };
-
   const handleSave = () => {
     // Save trimmed note, or empty string if it's only whitespace
     // The hook will handle converting empty string to null
     onSave(note.trim());
-    handleClose();
+    onClose();
   };
 
   return (
-    <Sheet open={open} onOpenChange={handleClose}>
+    <Sheet open={open} onOpenChange={onClose}>
       <SheetContent side="bottom" className="rounded-t-2xl">
         <SheetHeader className="pb-2">
           <SheetTitle>{projectName}</SheetTitle>
@@ -73,7 +56,7 @@ export function NoteDialog({
           />
         </div>
         <SheetFooter className="gap-2 flex-row pb-safe">
-          <Button variant="outline" onClick={handleClose} className="flex-1">
+          <Button variant="outline" onClick={onClose} className="flex-1">
             Cancel
           </Button>
           <Button onClick={handleSave} className="flex-1">Save</Button>
