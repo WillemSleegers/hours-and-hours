@@ -1,22 +1,22 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
+import { useState, useEffect } from "react"
 import {
   Sheet,
   SheetContent,
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+} from "@/components/ui/sheet"
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
 
 interface NoteDialogProps {
-  open: boolean;
-  onClose: () => void;
-  onSave: (note: string) => void;
-  initialNote?: string | null;
-  projectName: string;
+  open: boolean
+  onClose: () => void
+  onSave: (note: string) => void
+  initialNote?: string | null
+  projectName: string
 }
 
 export function NoteDialog({
@@ -26,22 +26,22 @@ export function NoteDialog({
   initialNote,
   projectName,
 }: NoteDialogProps) {
-  const [note, setNote] = useState(initialNote || "");
+  const [note, setNote] = useState(initialNote || "")
 
   useEffect(() => {
-    setNote(initialNote || "");
-  }, [initialNote]);
+    setNote(initialNote || "")
+  }, [initialNote])
 
   const handleSave = () => {
     // Save trimmed note, or empty string if it's only whitespace
     // The hook will handle converting empty string to null
-    onSave(note.trim());
-    onClose();
-  };
+    onSave(note.trim())
+    onClose()
+  }
 
   return (
     <Sheet open={open} onOpenChange={onClose} modal={false}>
-      <SheetContent side="bottom" className="rounded-t-2xl">
+      <SheetContent side="right" className="rounded-t-2xl">
         <SheetHeader className="pb-2">
           <SheetTitle>{projectName}</SheetTitle>
         </SheetHeader>
@@ -55,13 +55,15 @@ export function NoteDialog({
             autoFocus
           />
         </div>
-        <SheetFooter className="gap-2 flex-row pb-safe">
+        <div className="p-3 w-full flex gap-2">
           <Button variant="outline" onClick={onClose} className="flex-1">
             Cancel
           </Button>
-          <Button onClick={handleSave} className="flex-1">Save</Button>
-        </SheetFooter>
+          <Button onClick={handleSave} className="flex-1">
+            Save
+          </Button>
+        </div>
       </SheetContent>
     </Sheet>
-  );
+  )
 }
