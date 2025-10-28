@@ -139,8 +139,10 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="sticky top-0 z-10 pt-3">
-        <Header totalHours={totalHours} currentDate={currentDate} />
+      <div className="sticky top-0 z-10 pt-safe bg-background">
+        <div className="pt-3">
+          <Header totalHours={totalHours} currentDate={currentDate} />
+        </div>
       </div>
 
       {/* Time grid */}
