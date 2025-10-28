@@ -33,29 +33,19 @@ export function NoteDialog({
     setNote(initialNote || "");
   }, [initialNote]);
 
-  // Save scroll position when opening and ensure body overflow is reset when closing
+  // Save scroll position when opening
   useEffect(() => {
     if (open) {
       scrollPositionRef.current = window.scrollY;
-    } else {
-      // When sheet closes, ensure body overflow is properly reset
-      // Use a small delay to allow Radix Dialog to complete its cleanup
-      const timer = setTimeout(() => {
-        document.body.style.overflow = '';
-        document.body.style.paddingRight = '';
-        // Restore scroll position after Radix cleanup
-        if (scrollPositionRef.current !== window.scrollY) {
-          window.scrollTo({
-            top: scrollPositionRef.current,
-            behavior: 'instant'
-          });
-        }
-      }, 50);
-      return () => clearTimeout(timer);
     }
   }, [open]);
 
   const handleClose = () => {
+    // Restore scroll position with smooth animation
+    window.scrollTo({
+      top: scrollPositionRef.current,
+      behavior: 'smooth'
+    });
     onClose();
   };
 
