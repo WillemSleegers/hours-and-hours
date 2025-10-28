@@ -138,13 +138,13 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-background pt-[68px] pb-[140px]">
-      <div className="fixed top-0 left-0 right-0 z-10">
+    <div className="min-h-screen bg-background">
+      <div className="sticky top-0 z-10 pt-3">
         <Header totalHours={totalHours} currentDate={currentDate} />
       </div>
 
       {/* Time grid */}
-      <main className="px-3">
+      <main className="px-3 pb-3">
         <div className="container mx-auto max-w-4xl">
           {canShowEarlier && !showEarlierHours && (
             <div className="flex justify-center">
@@ -187,7 +187,7 @@ export default function Home() {
         </div>
       </main>
 
-      <div className="fixed bottom-0 left-0 right-0">
+      <div className="sticky bottom-0 z-10 pb-3">
         <Footer
           onPreviousDay={handlePreviousDay}
           onNextDay={handleNextDay}
