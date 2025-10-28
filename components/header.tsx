@@ -38,7 +38,7 @@ export function Header({ totalHours, currentDate }: HeaderProps) {
 
   return (
     <header className="p-3">
-      <div className="max-w-4xl mx-auto bg-card border border-border rounded-2xl shadow-sm px-3 py-2">
+      <div className="max-w-4xl mx-auto bg-red-500 border border-border rounded-2xl shadow-sm px-3 py-2">
         <div className="flex items-center justify-between">
           <Button
             variant="ghost"
