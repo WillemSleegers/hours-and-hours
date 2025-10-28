@@ -40,7 +40,7 @@ export function NoteDialog({
   };
 
   return (
-    <Sheet open={open} onOpenChange={onClose}>
+    <Sheet open={open} onOpenChange={onClose} modal={false}>
       <SheetContent side="bottom" className="rounded-t-2xl">
         <SheetHeader className="pb-2">
           <SheetTitle>{projectName}</SheetTitle>
