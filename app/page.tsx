@@ -139,7 +139,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background pt-[68px] pb-[140px]">
-      <div className="fixed top-0 left-0 right-0 z-10">
+      <div className="fixed top-0 left-0 right-0 z-10" style={{ transform: 'translate3d(0,0,0)' }}>
         <Header totalHours={totalHours} currentDate={currentDate} />
       </div>
 
@@ -187,7 +187,7 @@ export default function Home() {
         </div>
       </main>
 
-      <div className="fixed bottom-0 left-0 right-0">
+      <div className="fixed bottom-0 left-0 right-0" style={{ transform: 'translate3d(0,0,0)' }}>
         <Footer
           onPreviousDay={handlePreviousDay}
           onNextDay={handleNextDay}
