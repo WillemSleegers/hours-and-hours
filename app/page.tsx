@@ -29,7 +29,8 @@ export default function Home() {
   }, [authLoading, user, router])
 
   const { projects, isLoading: projectsLoading } = useProjects()
-  const { slots, entries, addSlots, deleteEntry, updateNote } = useTimeSlots(currentDate)
+  const { slots, entries, addSlots, deleteEntry, updateNote } =
+    useTimeSlots(currentDate)
   const {
     settings,
     updateSettings,
@@ -138,10 +139,8 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 pt-safe bg-background">
-        <Header totalHours={totalHours} currentDate={currentDate} />
-      </header>
+    <div className="bg-background max-w-xl mx-auto">
+      <Header totalHours={totalHours} currentDate={currentDate} />
 
       {/* Time grid */}
       <main className="px-3">
@@ -187,23 +186,21 @@ export default function Home() {
         </div>
       </main>
 
-      <footer className="sticky bottom-0 z-50 pb-safe bg-background">
-        <Footer
-          onPreviousDay={handlePreviousDay}
-          onNextDay={handleNextDay}
-          onToday={handleToday}
-          onDateSelect={handleDateSelect}
-          currentDate={currentDate}
-          activeProjectId={activeProjectId}
-          projects={projects}
-          onProjectSelect={handleProjectSelect}
-          onClearProject={() => setActiveProjectId(null)}
-          timeIncrement={settings.time_increment}
-          onIncrementChange={(increment) => {
-            updateSettings({ time_increment: increment })
-          }}
-        />
-      </footer>
+      <Footer
+        onPreviousDay={handlePreviousDay}
+        onNextDay={handleNextDay}
+        onToday={handleToday}
+        onDateSelect={handleDateSelect}
+        currentDate={currentDate}
+        activeProjectId={activeProjectId}
+        projects={projects}
+        onProjectSelect={handleProjectSelect}
+        onClearProject={() => setActiveProjectId(null)}
+        timeIncrement={settings.time_increment}
+        onIncrementChange={(increment) => {
+          updateSettings({ time_increment: increment })
+        }}
+      />
     </div>
   )
 }
