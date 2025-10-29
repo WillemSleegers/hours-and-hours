@@ -4,7 +4,7 @@ import { useState, useRef, Fragment, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { Project, TimeEntry, TimeSlot } from "@/lib/types"
 import { Button } from "./ui/button"
-import { XIcon, StickyNote } from "lucide-react"
+import { XIcon } from "lucide-react"
 import { NoteDialog } from "./note-dialog"
 
 interface TimeGridProps {
@@ -171,9 +171,7 @@ export function TimeGrid({
     // Active project IS selected - check if this slot is already filled
     const snappedTime = snapToIncrement(time)
     const slotAlreadyFilled = slots.some(
-      (s) =>
-        s.time_slot === snappedTime &&
-        !s.id.startsWith("temp-")
+      (s) => s.time_slot === snappedTime && !s.id.startsWith("temp-")
     )
 
     if (entry && slotAlreadyFilled) {
@@ -259,27 +257,30 @@ export function TimeGrid({
             >
               {entry && isEntryStart && (
                 <>
-                  <div className="flex items-center gap-1.5 pointer-events-none">
-                    <span className="font-semibold tracking-tight">
+                  <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                    <span className="font-semibold tracking-tight pointer-events-none shrink-0">
                       {getProjectName(entry.project_id)}
                     </span>
                     {entry.note && (
-                      <StickyNote className="h-3.5 w-3.5 opacity-80" />
+                      <span className="text-sm opacity-70 pointer-events-none truncate">
+                        {entry.note}
+                      </span>
                     )}
                   </div>
                   {selectedEntryId === entry.id && (
-                    <div className="flex items-center gap-1 pointer-events-auto">
+                    <div className="flex items-center gap-3 shrink-0">
                       <Button
                         onClick={(e) => {
                           e.stopPropagation()
-                          handleNoteEdit(entry)
+                          if (!noteDialogOpen) {
+                            handleNoteEdit(entry)
+                          }
                         }}
                         variant="ghost"
                         size="sm"
-                        className="h-7 w-7 p-0"
-                        title="Add/edit note"
+                        className="hover:text-accent hover:bg-accent/10 dark:text-accent-foreground dark:hover:bg-accent/25"
                       >
-                        <StickyNote className="h-4 w-4" />
+                        Add note
                       </Button>
                       <Button
                         onClick={(e) => {
@@ -289,7 +290,7 @@ export function TimeGrid({
                         }}
                         variant="ghost"
                         size="sm"
-                        className="h-7 w-7 p-0"
+                        className="h-7 w-7 p-0 pointer-events-auto hover:text-accent hover:bg-accent/10 dark:text-accent-foreground dark:hover:bg-accent/25"
                         title="Delete entry"
                       >
                         <XIcon className="h-4 w-4" />
@@ -316,7 +317,9 @@ export function TimeGrid({
         onClose={() => setNoteDialogOpen(false)}
         onSave={handleNoteSave}
         initialNote={editingEntry?.note}
-        projectName={editingEntry ? getProjectName(editingEntry.project_id) : ""}
+        projectName={
+          editingEntry ? getProjectName(editingEntry.project_id) : ""
+        }
       />
     </div>
   )

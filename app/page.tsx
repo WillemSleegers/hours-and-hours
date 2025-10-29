@@ -17,8 +17,6 @@ export default function Home() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
   const [currentDate, setCurrentDate] = useState(new Date())
-  const [showEarlierHours, setShowEarlierHours] = useState(false)
-  const [showLaterHours, setShowLaterHours] = useState(false)
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
 
   // Redirect to login if not authenticated
@@ -58,10 +56,14 @@ export default function Home() {
   }
 
   const actualRange = getActualHoursRange()
+  const [displayStartHour, setDisplayStartHour] = useState(actualRange.start)
+  const [displayEndHour, setDisplayEndHour] = useState(actualRange.end)
 
-  // Determine the display range
-  const displayStartHour = showEarlierHours ? 0 : actualRange.start
-  const displayEndHour = showLaterHours ? 24 : actualRange.end
+  // Reset display range when date changes or entries change
+  useEffect(() => {
+    setDisplayStartHour(actualRange.start)
+    setDisplayEndHour(actualRange.end)
+  }, [actualRange.start, actualRange.end])
 
   // Check if we can show earlier/later hours
   const canShowEarlier = displayStartHour > 0
@@ -69,26 +71,18 @@ export default function Home() {
 
   const handlePreviousDay = () => {
     setCurrentDate((date) => subDays(date, 1))
-    setShowEarlierHours(false)
-    setShowLaterHours(false)
   }
 
   const handleNextDay = () => {
     setCurrentDate((date) => addDays(date, 1))
-    setShowEarlierHours(false)
-    setShowLaterHours(false)
   }
 
   const handleToday = () => {
     setCurrentDate(new Date())
-    setShowEarlierHours(false)
-    setShowLaterHours(false)
   }
 
   const handleDateSelect = (date: Date) => {
     setCurrentDate(date)
-    setShowEarlierHours(false)
-    setShowLaterHours(false)
   }
 
   const handleBlockSelect = (start: number, end: number) => {
@@ -145,11 +139,11 @@ export default function Home() {
       {/* Time grid */}
       <main className="px-3">
         <div className="container mx-auto max-w-4xl">
-          {canShowEarlier && !showEarlierHours && (
+          {canShowEarlier && (
             <div className="flex justify-center">
               <Button
                 variant="ghost"
-                onClick={() => setShowEarlierHours(true)}
+                onClick={() => setDisplayStartHour(prev => Math.max(0, prev - 1))}
                 className="text-muted-foreground hover:text-foreground hover:bg-accent/50 h-12 gap-2 min-w-48"
               >
                 <ChevronUp className="h-4 w-4" />
@@ -171,11 +165,11 @@ export default function Home() {
             timeIncrement={settings.time_increment}
           />
 
-          {canShowLater && !showLaterHours && (
+          {canShowLater && (
             <div className="flex justify-center">
               <Button
                 variant="ghost"
-                onClick={() => setShowLaterHours(true)}
+                onClick={() => setDisplayEndHour(prev => Math.min(24, prev + 1))}
                 className="text-muted-foreground hover:text-foreground hover:bg-accent/50 h-12 gap-2 min-w-48"
               >
                 <ChevronDown className="h-4 w-4" />

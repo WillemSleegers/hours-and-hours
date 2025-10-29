@@ -9,7 +9,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
 
 interface NoteDialogProps {
   open: boolean
@@ -40,19 +40,22 @@ export function NoteDialog({
   }
 
   return (
-    <Sheet open={open} onOpenChange={onClose} modal={false}>
-      <SheetContent side="right" className="rounded-t-2xl">
+    <Sheet
+      open={open}
+      onOpenChange={(isOpen) => {
+        if (!isOpen) onClose()
+      }}
+    >
+      <SheetContent side="right" className="rounded-l-2xl">
         <SheetHeader className="pb-2">
           <SheetTitle>{projectName}</SheetTitle>
         </SheetHeader>
         <div className="px-4 pb-4">
-          <Textarea
+          <Input
             id="note"
             placeholder="What did you work on?"
-            value={note}
+            defaultValue={note}
             onChange={(e) => setNote(e.target.value)}
-            rows={4}
-            autoFocus
           />
         </div>
         <div className="p-3 w-full flex gap-2">
