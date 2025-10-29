@@ -3,9 +3,14 @@
 import { useState, useRef, Fragment, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { Project, TimeEntry, TimeSlot } from "@/lib/types"
-import { Button } from "./ui/button"
 import { XIcon } from "lucide-react"
 import { NoteDialog } from "./note-dialog"
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu"
 
 interface TimeGridProps {
   slots: TimeSlot[]
@@ -35,24 +40,9 @@ export function TimeGrid({
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState<number | null>(null)
   const [dragEnd, setDragEnd] = useState<number | null>(null)
-  const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null)
   const [noteDialogOpen, setNoteDialogOpen] = useState(false)
   const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null)
   const gridRef = useRef<HTMLDivElement>(null)
-
-  // Handle click outside to close action buttons
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (gridRef.current && !gridRef.current.contains(event.target as Node)) {
-        setSelectedEntryId(null)
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [])
 
   // Always display 15-minute slots for visual precision
   const displayIncrementInHours = 0.25 // 15 minutes
@@ -131,15 +121,6 @@ export function TimeGrid({
     )
   }
 
-  // Check if this time slot is the start or end of an entry
-  const isEntryBoundary = (entry: TimeEntry, time: number) => {
-    const isStart = entry.start_time === time
-    // Check if this is the last 15-min slot that contains part of the entry
-    const isEnd =
-      entry.end_time > time && entry.end_time <= time + displayIncrementInHours
-    return { isStart, isEnd }
-  }
-
   // All 15-minute slots have the same height
   const slotHeight = "h-10"
 
@@ -154,35 +135,26 @@ export function TimeGrid({
     }
   }
 
-  // Handle slot click - add slots or show action buttons
+  // Handle slot click - add slots or show context menu
   const handleSlotClick = (time: number) => {
-    // Always recalculate entry fresh to avoid stale closures
     const entry = getEntryForTimeSlot(time)
 
-    // If no active project
-    if (!activeProjectId) {
-      if (entry) {
-        // Show buttons for any entry when no project selected
-        setSelectedEntryId(selectedEntryId === entry.id ? null : entry.id)
-      }
-      return
-    }
+    // If clicking on an entry, don't do anything (context menu handles it)
+    if (entry) return
 
-    // Active project IS selected - check if this slot is already filled
+    // Only add slots if there's an active project
+    if (!activeProjectId) return
+
     const snappedTime = snapToIncrement(time)
-    const slotAlreadyFilled = slots.some(
-      (s) => s.time_slot === snappedTime && !s.id.startsWith("temp-")
-    )
-
-    if (entry && slotAlreadyFilled) {
-      // Clicking on an already-filled slot - show buttons
-      setSelectedEntryId(selectedEntryId === entry.id ? null : entry.id)
-      return
-    }
-
-    // Clicking on empty slot or temp slot - clear selection and add slots
-    setSelectedEntryId(null)
     onBlockSelect(snappedTime, snappedTime + incrementInHours)
+  }
+
+  // Check if this time slot is the start or end of an entry
+  const isEntryBoundary = (entry: TimeEntry, time: number) => {
+    const isStart = entry.start_time === time
+    const isEnd =
+      entry.end_time > time && entry.end_time <= time + displayIncrementInHours
+    return { isStart, isEnd }
   }
 
   const getProjectColor = (projectId: string) => {
@@ -229,77 +201,95 @@ export function TimeGrid({
             </div>
 
             {/* Time slot */}
-            <div
-              className={cn(
-                "relative flex items-center justify-between px-3 border-t border-border/30",
-                "transition-all duration-150 ease-in-out",
-                slotHeight,
-                (activeProjectId || entry) && "cursor-pointer",
-                // Selection state (dragging)
-                isSelected && [
-                  "bg-primary/8",
-                  getRoundedClasses(isSelectionStart, isSelectionEnd),
-                ],
-                // Entry styling
-                entry && [
-                  "text-white font-medium text-sm",
-                  getRoundedClasses(isEntryStart, isEntryEnd),
-                ]
-              )}
-              style={{
-                backgroundColor: entry
-                  ? getProjectColor(entry.project_id)
-                  : undefined,
-              }}
-              onMouseDown={() => !entry && handleMouseDown(time)}
-              onMouseEnter={() => handleMouseEnter(time)}
-              onClick={() => handleSlotClick(time)}
-            >
-              {entry && isEntryStart && (
-                <>
-                  <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                    <span className="font-semibold tracking-tight pointer-events-none shrink-0">
-                      {getProjectName(entry.project_id)}
-                    </span>
-                    {entry.note && (
-                      <span className="text-sm opacity-70 pointer-events-none truncate">
-                        {entry.note}
-                      </span>
+            {entry ? (
+              <ContextMenu>
+                <ContextMenuTrigger asChild>
+                  <div
+                    className={cn(
+                      "relative flex items-center justify-between px-3 border-t border-border/30",
+                      "transition-all duration-150 ease-in-out",
+                      slotHeight,
+                      "cursor-pointer",
+                      // Selection state (dragging)
+                      isSelected && [
+                        "bg-primary/8",
+                        getRoundedClasses(isSelectionStart, isSelectionEnd),
+                      ],
+                      // Entry styling
+                      "text-white font-medium text-sm",
+                      getRoundedClasses(isEntryStart, isEntryEnd)
+                    )}
+                    style={{
+                      backgroundColor: getProjectColor(entry.project_id),
+                    }}
+                    onContextMenu={(e) => {
+                      e.stopPropagation()
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      // Trigger context menu on left click
+                      e.currentTarget.dispatchEvent(
+                        new PointerEvent('contextmenu', {
+                          bubbles: true,
+                          cancelable: true,
+                          clientX: e.clientX,
+                          clientY: e.clientY,
+                        })
+                      )
+                    }}
+                  >
+                    {isEntryStart && (
+                      <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                        <span className="font-semibold tracking-tight shrink-0">
+                          {getProjectName(entry.project_id)}
+                        </span>
+                        {entry.note && (
+                          <span className="text-sm opacity-70 truncate">
+                            {entry.note}
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
-                  {selectedEntryId === entry.id && (
-                    <div className="flex items-center gap-3 shrink-0">
-                      <Button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          if (!noteDialogOpen) {
-                            handleNoteEdit(entry)
-                          }
-                        }}
-                        variant="ghost"
-                        size="sm"
-                        className="hover:text-accent hover:bg-accent/10 dark:text-accent-foreground dark:hover:bg-accent/25"
-                      >
-                        Add note
-                      </Button>
-                      <Button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onEntryDelete(entry.id)
-                          setSelectedEntryId(null)
-                        }}
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0 pointer-events-auto hover:text-accent hover:bg-accent/10 dark:text-accent-foreground dark:hover:bg-accent/25"
-                        title="Delete entry"
-                      >
-                        <XIcon className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
+                </ContextMenuTrigger>
+                <ContextMenuContent>
+                  <ContextMenuItem
+                    onClick={() => {
+                      if (!noteDialogOpen) {
+                        handleNoteEdit(entry)
+                      }
+                    }}
+                  >
+                    Add note
+                  </ContextMenuItem>
+                  <ContextMenuItem
+                    onClick={() => {
+                      onEntryDelete(entry.id)
+                    }}
+                  >
+                    <XIcon className="mr-2 h-4 w-4" />
+                    Delete
+                  </ContextMenuItem>
+                </ContextMenuContent>
+              </ContextMenu>
+            ) : (
+              <div
+                className={cn(
+                  "relative flex items-center justify-between px-3 border-t border-border/30",
+                  "transition-all duration-150 ease-in-out",
+                  slotHeight,
+                  activeProjectId && "cursor-pointer",
+                  // Selection state (dragging)
+                  isSelected && [
+                    "bg-primary/8",
+                    getRoundedClasses(isSelectionStart, isSelectionEnd),
+                  ]
+                )}
+                onMouseDown={() => handleMouseDown(time)}
+                onMouseEnter={() => handleMouseEnter(time)}
+                onClick={() => handleSlotClick(time)}
+              />
+            )}
           </Fragment>
         )
       })}
