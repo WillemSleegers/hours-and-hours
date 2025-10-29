@@ -54,7 +54,7 @@ export function Header({ totalHours, currentDate }: HeaderProps) {
           </span>
         </Button>
         <div className="text-center">
-          <div className="text-sm font-semibold">
+          <div className="text-base font-semibold">
             {format(currentDate, "EEE, MMM d")}
           </div>
         </div>
