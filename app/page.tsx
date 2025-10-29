@@ -143,8 +143,10 @@ export default function Home() {
             <div className="flex justify-center">
               <Button
                 variant="ghost"
-                onClick={() => setDisplayStartHour(prev => Math.max(0, prev - 1))}
-                className="text-muted-foreground hover:text-foreground hover:bg-accent/50 h-12 gap-2 min-w-48"
+                onClick={() =>
+                  setDisplayStartHour((prev) => Math.max(0, prev - 1))
+                }
+                className="text-muted-foreground hover:text-foreground hover:bg-accent/50 gap-2 min-w-48"
               >
                 <ChevronUp className="h-4 w-4" />
                 Show earlier hours
@@ -169,8 +171,10 @@ export default function Home() {
             <div className="flex justify-center">
               <Button
                 variant="ghost"
-                onClick={() => setDisplayEndHour(prev => Math.min(24, prev + 1))}
-                className="text-muted-foreground hover:text-foreground hover:bg-accent/50 h-12 gap-2 min-w-48"
+                onClick={() =>
+                  setDisplayEndHour((prev) => Math.min(24, prev + 1))
+                }
+                className="text-muted-foreground hover:text-foreground hover:bg-accent/50 gap-2 min-w-48"
               >
                 <ChevronDown className="h-4 w-4" />
                 Show later hours
