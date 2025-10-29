@@ -3,7 +3,6 @@
 import { useState, useRef, Fragment, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { Project, TimeEntry, TimeSlot } from "@/lib/types"
-import { XIcon } from "lucide-react"
 import { NoteDialog } from "./note-dialog"
 import {
   ContextMenu,
@@ -216,11 +215,12 @@ export function TimeGrid({
                         getRoundedClasses(isSelectionStart, isSelectionEnd),
                       ],
                       // Entry styling
-                      "text-white font-medium text-sm",
+                      "text-sm",
                       getRoundedClasses(isEntryStart, isEntryEnd)
                     )}
                     style={{
-                      backgroundColor: getProjectColor(entry.project_id),
+                      backgroundColor: `${getProjectColor(entry.project_id)}50`,
+                      color: getProjectColor(entry.project_id),
                     }}
                     onContextMenu={(e) => {
                       e.stopPropagation()
@@ -240,11 +240,11 @@ export function TimeGrid({
                   >
                     {isEntryStart && (
                       <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                        <span className="font-semibold tracking-tight shrink-0">
+                        <span className="font-bold tracking-tight shrink-0">
                           {getProjectName(entry.project_id)}
                         </span>
                         {entry.note && (
-                          <span className="text-sm opacity-70 truncate">
+                          <span className="font-normal truncate">
                             {entry.note}
                           </span>
                         )}
@@ -267,7 +267,6 @@ export function TimeGrid({
                       onEntryDelete(entry.id)
                     }}
                   >
-                    <XIcon className="mr-2 h-4 w-4" />
                     Delete
                   </ContextMenuItem>
                 </ContextMenuContent>
