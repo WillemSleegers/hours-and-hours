@@ -4,9 +4,9 @@ An intuitive time tracking app focused on simplicity and ease of use.
 
 ## Features
 
-- **Daily View**: Click or drag to select time blocks and assign them to projects
-- **Notes on Entries**: Add notes to time entries to track what you worked on
-- **Configurable Time Tracking**: Choose between 15-minute, 30-minute, or 1-hour increments
+- **Daily View**: Tap slots to add 15-minute time blocks and assign them to projects
+- **Notes on Slots**: Add notes to time slots to track what you worked on
+- **Touch-Optimized**: Simple tap interface designed for mobile and touch screens
 - **Flexible Day Hours**: Set custom start and end times for your workday
 - **Statistics Page**: View aggregated hours across all projects with date range filtering
 - **Project Management**: Create, edit, archive, and delete projects with custom colors
@@ -96,7 +96,6 @@ The app uses three main tables:
 - `id`: UUID (primary key, matches auth.users.id)
 - `day_start_hour`: Integer (0-23, when your day starts)
 - `day_end_hour`: Integer (1-24, when your day ends)
-- `time_increment`: Integer (15, 30, or 60 minutes - controls selection granularity)
 - `stats_start_date`: Date (saved filter for statistics page)
 - `stats_end_date`: Date (saved filter for statistics page)
 - `created_at`, `updated_at`: Timestamps
@@ -116,9 +115,9 @@ The app uses three main tables:
 
 4. **Track Time**: On the daily view:
    - Select a project from the footer dropdown
-   - Click or drag to select time blocks (15-min, 30-min, or 1-hour increments)
-   - Click existing entries to add notes about what you worked on
-   - Toggle time increment in the footer to change selection granularity
+   - Tap empty slots to add 15-minute time blocks
+   - Tap existing slots to show Note and Delete buttons
+   - Click the Note button to add notes about what you worked on
 
 5. **Navigate Days**: Use the arrow buttons or calendar picker to switch between days
 

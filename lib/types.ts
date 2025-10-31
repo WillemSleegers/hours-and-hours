@@ -38,7 +38,6 @@ export interface UserSettings {
   id: string;
   day_start_hour: number;
   day_end_hour: number;
-  time_increment: 15 | 30 | 60;
   stats_start_date?: string | null;
   stats_end_date?: string | null;
   created_at?: string;

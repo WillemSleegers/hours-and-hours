@@ -1,47 +1,35 @@
 "use client"
 
-import { useState, useRef, Fragment, useEffect } from "react"
+import { useState, Fragment, useEffect } from "react"
 import { cn } from "@/lib/utils"
-import { Project, TimeEntry, TimeSlot } from "@/lib/types"
+import { Project, TimeSlot } from "@/lib/types"
 import { NoteDialog } from "./note-dialog"
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuTrigger,
-} from "@/components/ui/context-menu"
+import { Button } from "@/components/ui/button"
 
 interface TimeGridProps {
   slots: TimeSlot[]
-  entries: TimeEntry[]
   projects: Project[]
-  onBlockSelect: (startTime: number, endTime: number) => void
-  onEntryDelete: (entryId: string) => void
-  onNoteUpdate: (entryId: string, note: string) => void
+  onSlotToggle: (projectId: string, timeSlot: number) => void
+  onSlotDelete: (slotId: string) => void
+  onNoteUpdate: (slotId: string, note: string) => void
   activeProjectId: string | null
   dayStartHour?: number
   dayEndHour?: number
-  timeIncrement?: 15 | 30 | 60
 }
 
 export function TimeGrid({
   slots,
-  entries,
   projects,
-  onBlockSelect,
-  onEntryDelete,
+  onSlotToggle,
+  onSlotDelete,
   onNoteUpdate,
   activeProjectId,
   dayStartHour = 0,
   dayEndHour = 24,
-  timeIncrement = 60,
 }: TimeGridProps) {
-  const [isDragging, setIsDragging] = useState(false)
-  const [dragStart, setDragStart] = useState<number | null>(null)
-  const [dragEnd, setDragEnd] = useState<number | null>(null)
   const [noteDialogOpen, setNoteDialogOpen] = useState(false)
-  const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null)
-  const gridRef = useRef<HTMLDivElement>(null)
+  const [editingSlot, setEditingSlot] = useState<TimeSlot | null>(null)
+  const [selectedSlotTime, setSelectedSlotTime] = useState<number | null>(null)
 
   // Always display 15-minute slots for visual precision
   const displayIncrementInHours = 0.25 // 15 minutes
@@ -53,9 +41,6 @@ export function TimeGrid({
     (_, i) => dayStartHour + i * displayIncrementInHours
   )
 
-  // User's increment setting controls selection granularity
-  const incrementInHours = timeIncrement / 60
-
   const formatTime = (time: number) => {
     const hours = Math.floor(time)
     const minutes = Math.round((time - hours) * 60)
@@ -64,96 +49,64 @@ export function TimeGrid({
       .padStart(2, "0")}`
   }
 
-  // Snap to the clicked 15-min slot (always start from where you clicked)
-  // For 30min increment: clicking 9:15 selects 9:15-9:45, clicking 9:45 selects 9:45-10:15
+  // Snap to the clicked 15-min slot
   const snapToIncrement = (time: number) => {
-    // Just round to nearest 15-min slot - don't floor to increment boundary
     return Math.round(time * 4) / 4
   }
 
-  const handleMouseDown = (time: number) => {
-    if (!activeProjectId) return // Don't allow dragging without active project
-    const snappedTime = snapToIncrement(time)
-    setIsDragging(true)
-    setDragStart(snappedTime)
-    setDragEnd(snappedTime)
-  }
-
-  const handleMouseEnter = (time: number) => {
-    if (isDragging) {
-      const snappedTime = snapToIncrement(time)
-      setDragEnd(snappedTime)
-    }
-  }
-
-  const handleMouseUp = () => {
-    if (isDragging && dragStart !== null && dragEnd !== null) {
-      const start = Math.min(dragStart, dragEnd)
-      const end = Math.max(dragStart, dragEnd) + incrementInHours
-      onBlockSelect(start, end)
-      setIsDragging(false)
-      setDragStart(null)
-      setDragEnd(null)
-    }
-  }
-
-  const isTimeSlotSelected = (time: number) => {
-    if (!isDragging || dragStart === null || dragEnd === null) return false
-    const start = Math.min(dragStart, dragEnd)
-    const end = Math.max(dragStart, dragEnd) + incrementInHours
-    return time >= start && time < end
-  }
-
-  // Check if this is the start or end of the selection range (for rounded corners)
-  const getSelectionBoundary = (time: number) => {
-    if (!isTimeSlotSelected(time)) return { isStart: false, isEnd: false }
-    const start = Math.min(dragStart!, dragEnd!)
-    const end = Math.max(dragStart!, dragEnd!) + incrementInHours
-    const isStart = time === start
-    const isEnd = time >= end - displayIncrementInHours
-    return { isStart, isEnd }
-  }
-
-  const getEntryForTimeSlot = (time: number) => {
-    return entries.find(
-      (entry) => time >= entry.start_time && time < entry.end_time
-    )
+  const getSlotForTime = (time: number) => {
+    return slots.find((slot) => slot.time_slot === time)
   }
 
   // All 15-minute slots have the same height
   const slotHeight = "h-10"
 
-  const handleNoteEdit = (entry: TimeEntry) => {
-    setEditingEntry(entry)
+  const handleNoteEdit = (slot: TimeSlot) => {
+    setEditingSlot(slot)
     setNoteDialogOpen(true)
   }
 
   const handleNoteSave = (note: string) => {
-    if (editingEntry) {
-      onNoteUpdate(editingEntry.id, note)
+    if (editingSlot) {
+      onNoteUpdate(editingSlot.id, note)
     }
   }
 
-  // Handle slot click - add slots or show context menu
+  // Handle slot click - create slot or toggle selection
   const handleSlotClick = (time: number) => {
-    const entry = getEntryForTimeSlot(time)
-
-    // If clicking on an entry, don't do anything (context menu handles it)
-    if (entry) return
-
-    // Only add slots if there's an active project
-    if (!activeProjectId) return
-
     const snappedTime = snapToIncrement(time)
-    onBlockSelect(snappedTime, snappedTime + incrementInHours)
+    const slot = getSlotForTime(snappedTime)
+
+    if (activeProjectId) {
+      // Project is active
+      if (slot) {
+        if (slot.project_id === activeProjectId) {
+          // Same project: toggle selection
+          setSelectedSlotTime(selectedSlotTime === snappedTime ? null : snappedTime)
+        } else {
+          // Different project: switch to active project
+          onSlotDelete(slot.id)
+          onSlotToggle(activeProjectId, snappedTime)
+          // Don't select the new slot - user needs to click again to open it
+        }
+      } else {
+        // Empty slot: add slot but don't select it
+        onSlotToggle(activeProjectId, snappedTime)
+        // Don't set selectedSlotTime - user needs to click again to open it
+      }
+    } else {
+      // No active project: toggle selection if slot exists
+      if (slot) {
+        setSelectedSlotTime(selectedSlotTime === snappedTime ? null : snappedTime)
+      }
+    }
   }
 
-  // Check if this time slot is the start or end of an entry
-  const isEntryBoundary = (entry: TimeEntry, time: number) => {
-    const isStart = entry.start_time === time
-    const isEnd =
-      entry.end_time > time && entry.end_time <= time + displayIncrementInHours
-    return { isStart, isEnd }
+  // Check if this is the first slot in a visual group (for showing project name)
+  const isFirstInGroup = (time: number, slot: TimeSlot) => {
+    const prevTime = time - 0.25
+    const prevSlot = getSlotForTime(prevTime)
+    return !prevSlot || prevSlot.project_id !== slot.project_id
   }
 
   const getProjectColor = (projectId: string) => {
@@ -166,29 +119,20 @@ export function TimeGrid({
     return project?.name || "Unknown"
   }
 
-  return (
-    <div
-      ref={gridRef}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-      className="select-none grid grid-cols-[auto_1fr] gap-x-2 py-2"
-    >
-      {timeSlots.map((time) => {
-        const entry = getEntryForTimeSlot(time)
-        const isSelected = isTimeSlotSelected(time)
-        const { isStart: isSelectionStart, isEnd: isSelectionEnd } =
-          getSelectionBoundary(time)
-        const { isStart: isEntryStart, isEnd: isEntryEnd } = entry
-          ? isEntryBoundary(entry, time)
-          : { isStart: false, isEnd: false }
+  // Clear selection when project is cleared
+  useEffect(() => {
+    if (!activeProjectId) {
+      setSelectedSlotTime(null)
+    }
+  }, [activeProjectId])
 
-        // Helper to get rounded corner classes
-        const getRoundedClasses = (isStart: boolean, isEnd: boolean) => {
-          if (isStart && isEnd) return "rounded-lg"
-          if (isStart) return "rounded-t-lg"
-          if (isEnd) return "rounded-b-lg"
-          return ""
-        }
+  return (
+    <div className="select-none grid grid-cols-[auto_1fr] gap-x-2 py-2">
+      {timeSlots.map((time) => {
+        const slot = getSlotForTime(time)
+        const isFirst = slot ? isFirstInGroup(time, slot) : false
+        const isSelected = selectedSlotTime === time && slot !== undefined
+        const showButtons = isSelected
 
         return (
           <Fragment key={time}>
@@ -200,95 +144,101 @@ export function TimeGrid({
             </div>
 
             {/* Time slot */}
-            {entry ? (
-              <ContextMenu>
-                <ContextMenuTrigger asChild>
-                  <div
-                    className={cn(
-                      "relative flex items-center justify-between px-3 border-t border-border/30",
-                      "transition-all duration-150 ease-in-out",
-                      slotHeight,
-                      "cursor-pointer",
-                      // Selection state (dragging)
-                      isSelected && [
-                        "bg-primary/8",
-                        getRoundedClasses(isSelectionStart, isSelectionEnd),
-                      ],
-                      // Entry styling
-                      "text-sm",
-                      getRoundedClasses(isEntryStart, isEntryEnd)
-                    )}
-                    style={{
-                      backgroundColor: `${getProjectColor(entry.project_id)}50`,
-                      color: getProjectColor(entry.project_id),
-                    }}
-                    onContextMenu={(e) => {
-                      e.stopPropagation()
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      // Trigger context menu on left click
-                      e.currentTarget.dispatchEvent(
-                        new PointerEvent('contextmenu', {
-                          bubbles: true,
-                          cancelable: true,
-                          clientX: e.clientX,
-                          clientY: e.clientY,
-                        })
-                      )
-                    }}
-                  >
-                    {isEntryStart && (
-                      <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                        <span className="font-bold tracking-tight shrink-0">
-                          {getProjectName(entry.project_id)}
-                        </span>
-                        {entry.note && (
-                          <span className="font-normal truncate">
-                            {entry.note}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </ContextMenuTrigger>
-                <ContextMenuContent>
-                  <ContextMenuItem
-                    onClick={() => {
-                      if (!noteDialogOpen) {
-                        handleNoteEdit(entry)
-                      }
-                    }}
-                  >
-                    Add note
-                  </ContextMenuItem>
-                  <ContextMenuItem
-                    onClick={() => {
-                      onEntryDelete(entry.id)
-                    }}
-                  >
-                    Delete
-                  </ContextMenuItem>
-                </ContextMenuContent>
-              </ContextMenu>
-            ) : (
+            <div className="relative border-t border-border/30">
+              {/* Slot content - clickable bar */}
               <div
                 className={cn(
-                  "relative flex items-center justify-between px-3 border-t border-border/30",
-                  "transition-all duration-150 ease-in-out",
+                  "flex items-center gap-1.5 px-3",
                   slotHeight,
-                  activeProjectId && "cursor-pointer",
-                  // Selection state (dragging)
-                  isSelected && [
-                    "bg-primary/8",
-                    getRoundedClasses(isSelectionStart, isSelectionEnd),
-                  ]
+                  (activeProjectId || slot) && "cursor-pointer",
+                  slot && "text-sm rounded-lg"
                 )}
-                onMouseDown={() => handleMouseDown(time)}
-                onMouseEnter={() => handleMouseEnter(time)}
+                style={
+                  slot
+                    ? {
+                        backgroundColor: `${getProjectColor(
+                          slot.project_id
+                        )}50`,
+                        color: getProjectColor(slot.project_id),
+                      }
+                    : undefined
+                }
                 onClick={() => handleSlotClick(time)}
-              />
-            )}
+              >
+                {slot && isFirst && (
+                  <span className="font-bold tracking-tight shrink-0">
+                    {getProjectName(slot.project_id)}
+                  </span>
+                )}
+              </div>
+
+              {/* Expandable section - note and actions */}
+              <div
+                className="overflow-hidden"
+                style={{
+                  maxHeight: showButtons && slot ? "200px" : "0",
+                  transition: "max-height 200ms ease-out",
+                }}
+              >
+                {slot && (
+                  <div
+                    className="px-3 py-2 space-y-2 rounded-lg mt-1"
+                    style={{
+                      backgroundColor: `${getProjectColor(slot.project_id)}20`,
+                    }}
+                  >
+                    {/* Note display/edit */}
+                    {slot.note && (
+                      <div
+                        className="text-sm"
+                        style={{ color: getProjectColor(slot.project_id) }}
+                      >
+                        {slot.note}
+                      </div>
+                    )}
+
+                    {/* Action buttons */}
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleNoteEdit(slot)
+                        }}
+                        className="h-8 px-3 shrink-0 rounded-lg"
+                        style={{
+                          backgroundColor: `${getProjectColor(
+                            slot.project_id
+                          )}30`,
+                          color: getProjectColor(slot.project_id),
+                        }}
+                      >
+                        {slot.note ? "Edit note" : "Add note"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onSlotDelete(slot.id)
+                          setSelectedSlotTime(null)
+                        }}
+                        className="h-8 px-3 shrink-0 rounded-lg"
+                        style={{
+                          backgroundColor: `${getProjectColor(
+                            slot.project_id
+                          )}30`,
+                          color: getProjectColor(slot.project_id),
+                        }}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </Fragment>
         )
       })}
@@ -305,10 +255,8 @@ export function TimeGrid({
         open={noteDialogOpen}
         onClose={() => setNoteDialogOpen(false)}
         onSave={handleNoteSave}
-        initialNote={editingEntry?.note}
-        projectName={
-          editingEntry ? getProjectName(editingEntry.project_id) : ""
-        }
+        initialNote={editingSlot?.note}
+        projectName={editingSlot ? getProjectName(editingSlot.project_id) : ""}
       />
     </div>
   )

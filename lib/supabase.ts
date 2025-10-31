@@ -83,7 +83,6 @@ interface Database {
           id: string
           day_start_hour: number
           day_end_hour: number
-          time_increment: number
           stats_start_date: string | null
           stats_end_date: string | null
           created_at: string
@@ -93,7 +92,6 @@ interface Database {
           id?: string
           day_start_hour?: number
           day_end_hour?: number
-          time_increment?: number
           stats_start_date?: string | null
           stats_end_date?: string | null
           created_at?: string
@@ -103,7 +101,6 @@ interface Database {
           id?: string
           day_start_hour?: number
           day_end_hour?: number
-          time_increment?: number
           stats_start_date?: string | null
           stats_end_date?: string | null
           created_at?: string

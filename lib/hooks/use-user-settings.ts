@@ -8,7 +8,6 @@ import { toast } from "sonner";
 const DEFAULT_SETTINGS: Omit<UserSettings, "id" | "created_at" | "updated_at"> = {
   day_start_hour: 0,
   day_end_hour: 24,
-  time_increment: 60,
   stats_start_date: null,
   stats_end_date: null,
 };
@@ -64,7 +63,7 @@ export function useUserSettings() {
   }, []);
 
   const updateSettings = async (
-    updates: Partial<Pick<UserSettings, "day_start_hour" | "day_end_hour" | "time_increment" | "stats_start_date" | "stats_end_date">>
+    updates: Partial<Pick<UserSettings, "day_start_hour" | "day_end_hour" | "stats_start_date" | "stats_end_date">>
   ) => {
     if (!settings) return;
 

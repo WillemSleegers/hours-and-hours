@@ -26,8 +26,6 @@ interface FooterProps {
   projects: Project[]
   onProjectSelect: (projectId: string) => void
   onClearProject: () => void
-  timeIncrement: 15 | 30 | 60
-  onIncrementChange: (increment: 15 | 30 | 60) => void
 }
 
 export function Footer({
@@ -40,8 +38,6 @@ export function Footer({
   projects,
   onProjectSelect,
   onClearProject,
-  timeIncrement,
-  onIncrementChange,
 }: FooterProps) {
   const [datePickerOpen, setDatePickerOpen] = useState(false)
 
@@ -106,90 +102,64 @@ export function Footer({
           </Button>
         </div>
 
-        {/* Time increment buttons */}
-        <div className="flex items-center gap-1 bg-muted rounded-lg p-1 ml-auto">
-          <Button
-            variant={timeIncrement === 15 ? "default" : "ghost"}
-            size="sm"
-            onClick={() => onIncrementChange(15)}
-            className="h-8 px-3 text-xs"
-          >
-            15m
-          </Button>
-          <Button
-            variant={timeIncrement === 30 ? "default" : "ghost"}
-            size="sm"
-            onClick={() => onIncrementChange(30)}
-            className="h-8 px-3 text-xs"
-          >
-            30m
-          </Button>
-          <Button
-            variant={timeIncrement === 60 ? "default" : "ghost"}
-            size="sm"
-            onClick={() => onIncrementChange(60)}
-            className="h-8 px-3 text-xs"
-          >
-            1h
-          </Button>
-        </div>
-
         {/* Project dropdown */}
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="default"
-              size="sm"
-              className={`h-10 px-4 w-full ${
-                activeProjectId ? "text-white" : ""
-              }`}
-              style={
-                activeProjectId
-                  ? {
-                      backgroundColor:
-                        projects.find((p) => p.id === activeProjectId)?.color ||
-                        undefined,
-                      borderColor:
-                        projects.find((p) => p.id === activeProjectId)?.color ||
-                        undefined,
-                    }
-                  : undefined
-              }
-            >
-              {activeProjectId
-                ? projects.find((p) => p.id === activeProjectId)?.name ||
-                  "Select project"
-                : "Select project"}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" side="top" className="w-48">
-            {activeProjectId && (
-              <>
-                <DropdownMenuItem onClick={onClearProject}>
-                  <X className="mr-2 h-4 w-4" />
-                  Clear Selection
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-              </>
-            )}
-            {activeProjects.map((project) => (
-              <DropdownMenuItem
-                key={project.id}
-                onClick={() => onProjectSelect(project.id)}
+        <div className="flex items-center gap-2 flex-1">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="default"
+                size="sm"
+                className={`h-10 px-4 flex-1 ${
+                  activeProjectId ? "text-white" : ""
+                }`}
+                style={
+                  activeProjectId
+                    ? {
+                        backgroundColor:
+                          projects.find((p) => p.id === activeProjectId)?.color ||
+                          undefined,
+                        borderColor:
+                          projects.find((p) => p.id === activeProjectId)?.color ||
+                          undefined,
+                      }
+                    : undefined
+                }
               >
-                <div
-                  className="mr-2 h-3 w-3 rounded-full"
-                  style={{ backgroundColor: project.color }}
-                />
-                {project.name}
-                {activeProjectId === project.id && (
-                  <Check className="ml-auto h-4 w-4" />
-                )}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+                {activeProjectId
+                  ? projects.find((p) => p.id === activeProjectId)?.name ||
+                    "Select project"
+                  : "Select project"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" side="top" className="w-48">
+              {activeProjects.map((project) => (
+                <DropdownMenuItem
+                  key={project.id}
+                  onClick={() => onProjectSelect(project.id)}
+                >
+                  <div
+                    className="mr-2 h-3 w-3 rounded-full"
+                    style={{ backgroundColor: project.color }}
+                  />
+                  {project.name}
+                  {activeProjectId === project.id && (
+                    <Check className="ml-auto h-4 w-4" />
+                  )}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          {activeProjectId && (
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={onClearProject}
+              className="h-10 w-10 hover:bg-accent/50"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          )}
+        </div>
       </div>
     </footer>
   )

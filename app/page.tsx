@@ -27,7 +27,7 @@ export default function Home() {
   }, [authLoading, user, router])
 
   const { projects, isLoading: projectsLoading } = useProjects()
-  const { slots, entries, addSlots, deleteEntry, updateNote } =
+  const { slots, toggleSlot, deleteSlots, updateNote } =
     useTimeSlots(currentDate)
   const {
     settings,
@@ -35,23 +35,21 @@ export default function Home() {
     isLoading: settingsLoading,
   } = useUserSettings()
 
-  // Calculate the actual range of hours based on entries
+  // Calculate the actual range of hours based on slots
   const getActualHoursRange = () => {
-    if (entries.length === 0) {
+    if (slots.length === 0) {
       return {
         start: settings.day_start_hour,
         end: settings.day_end_hour,
       }
     }
 
-    const earliestEntry = Math.min(
-      ...entries.map((e) => Math.floor(e.start_time))
-    )
-    const latestEntry = Math.max(...entries.map((e) => Math.ceil(e.end_time)))
+    const earliestSlot = Math.min(...slots.map((s) => Math.floor(s.time_slot)))
+    const latestSlot = Math.max(...slots.map((s) => Math.ceil(s.time_slot + 0.25)))
 
     return {
-      start: Math.min(earliestEntry, settings.day_start_hour),
-      end: Math.max(latestEntry, settings.day_end_hour),
+      start: Math.min(earliestSlot, settings.day_start_hour),
+      end: Math.max(latestSlot, settings.day_end_hour),
     }
   }
 
@@ -59,7 +57,7 @@ export default function Home() {
   const [displayStartHour, setDisplayStartHour] = useState(actualRange.start)
   const [displayEndHour, setDisplayEndHour] = useState(actualRange.end)
 
-  // Reset display range when date changes or entries change
+  // Reset display range when date changes or slots change
   useEffect(() => {
     setDisplayStartHour(actualRange.start)
     setDisplayEndHour(actualRange.end)
@@ -85,21 +83,19 @@ export default function Home() {
     setCurrentDate(date)
   }
 
-  const handleBlockSelect = (start: number, end: number) => {
-    // If active project is set, add slots for the range
-    if (activeProjectId) {
-      addSlots(activeProjectId, start, end)
-    }
-  }
-
   const handleProjectSelect = (projectId: string) => {
     setActiveProjectId(projectId)
   }
 
-  const totalHours = entries.reduce(
-    (sum, entry) => sum + (entry.end_time - entry.start_time),
-    0
-  )
+  const handleSlotDelete = async (slotId: string) => {
+    const slot = slots.find((s) => s.id === slotId)
+    if (!slot) return
+
+    // Delete just this one slot
+    await deleteSlots(slot.time_slot, slot.time_slot + 0.25)
+  }
+
+  const totalHours = slots.length * 0.25 // Each slot is 15 minutes (0.25 hours)
 
   // Show loading state while data is being fetched
   if (authLoading || projectsLoading || settingsLoading) {
@@ -156,15 +152,13 @@ export default function Home() {
 
           <TimeGrid
             slots={slots}
-            entries={entries}
             projects={projects}
-            onBlockSelect={handleBlockSelect}
-            onEntryDelete={deleteEntry}
+            onSlotToggle={toggleSlot}
+            onSlotDelete={handleSlotDelete}
             onNoteUpdate={updateNote}
             activeProjectId={activeProjectId}
             dayStartHour={displayStartHour}
             dayEndHour={displayEndHour}
-            timeIncrement={settings.time_increment}
           />
 
           {canShowLater && (
@@ -194,10 +188,6 @@ export default function Home() {
         projects={projects}
         onProjectSelect={handleProjectSelect}
         onClearProject={() => setActiveProjectId(null)}
-        timeIncrement={settings.time_increment}
-        onIncrementChange={(increment) => {
-          updateSettings({ time_increment: increment })
-        }}
       />
     </div>
   )
