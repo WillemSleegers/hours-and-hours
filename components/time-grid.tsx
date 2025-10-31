@@ -169,71 +169,73 @@ export function TimeGrid({
               </div>
 
               {/* Expandable section - note and actions */}
-              <div
-                className="overflow-hidden"
-                style={{
-                  maxHeight: showButtons && slot ? "200px" : "0",
-                  transition: "max-height 200ms ease-out",
-                }}
-              >
-                {slot && (
-                  <div
-                    className="px-3 py-2 space-y-2 rounded-lg mt-1"
-                    style={{
-                      backgroundColor: `${getProjectColor(slot.project_id)}20`,
-                    }}
-                  >
-                    {/* Note display/edit */}
-                    {slot.note && (
-                      <div
-                        className="text-sm"
-                        style={{ color: getProjectColor(slot.project_id) }}
-                      >
-                        {slot.note}
-                      </div>
-                    )}
+              {slot && (
+                <div
+                  className="overflow-hidden grid"
+                  style={{
+                    gridTemplateRows: showButtons ? "1fr" : "0fr",
+                    transition: "grid-template-rows 150ms ease-out",
+                  }}
+                >
+                  <div className="min-h-0">
+                    <div
+                      className="px-3 py-1.5 space-y-1.5 rounded-lg border-t border-border/30 mt-px"
+                      style={{
+                        backgroundColor: `${getProjectColor(slot.project_id)}20`,
+                      }}
+                    >
+                      {/* Note display/edit */}
+                      {slot.note && (
+                        <div
+                          className="text-sm"
+                          style={{ color: getProjectColor(slot.project_id) }}
+                        >
+                          {slot.note}
+                        </div>
+                      )}
 
-                    {/* Action buttons */}
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleNoteEdit(slot)
-                        }}
-                        className="h-8 px-3 shrink-0 rounded-lg"
-                        style={{
-                          backgroundColor: `${getProjectColor(
-                            slot.project_id
-                          )}30`,
-                          color: getProjectColor(slot.project_id),
-                        }}
-                      >
-                        {slot.note ? "Edit note" : "Add note"}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onSlotDelete(slot.id)
-                          setSelectedSlotTime(null)
-                        }}
-                        className="h-8 px-3 shrink-0 rounded-lg"
-                        style={{
-                          backgroundColor: `${getProjectColor(
-                            slot.project_id
-                          )}30`,
-                          color: getProjectColor(slot.project_id),
-                        }}
-                      >
-                        Delete
-                      </Button>
+                      {/* Action buttons */}
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleNoteEdit(slot)
+                          }}
+                          className="h-8 px-3 shrink-0 rounded-lg"
+                          style={{
+                            backgroundColor: `${getProjectColor(
+                              slot.project_id
+                            )}30`,
+                            color: getProjectColor(slot.project_id),
+                          }}
+                        >
+                          {slot.note ? "Edit note" : "Add note"}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onSlotDelete(slot.id)
+                            setSelectedSlotTime(null)
+                          }}
+                          className="h-8 px-3 shrink-0 rounded-lg"
+                          style={{
+                            backgroundColor: `${getProjectColor(
+                              slot.project_id
+                            )}30`,
+                            color: getProjectColor(slot.project_id),
+                          }}
+                        >
+                          Delete
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </Fragment>
         )
