@@ -81,21 +81,17 @@ export function TimeGrid({
       // Project is active
       if (slot) {
         if (slot.project_id === activeProjectId) {
-          // Same project: toggle selection
+          // Same project: toggle expandable section
           setSelectedSlotTime(selectedSlotTime === snappedTime ? null : snappedTime)
-        } else {
-          // Different project: switch to active project
-          onSlotDelete(slot.id)
-          onSlotToggle(activeProjectId, snappedTime)
-          // Don't select the new slot - user needs to click again to open it
         }
+        // Different project: do nothing
       } else {
         // Empty slot: add slot but don't select it
         onSlotToggle(activeProjectId, snappedTime)
         // Don't set selectedSlotTime - user needs to click again to open it
       }
     } else {
-      // No active project: toggle selection if slot exists
+      // No active project: toggle expandable section if slot exists
       if (slot) {
         setSelectedSlotTime(selectedSlotTime === snappedTime ? null : snappedTime)
       }

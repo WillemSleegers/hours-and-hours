@@ -100,6 +100,44 @@ The app uses three main tables:
 - `stats_end_date`: Date (saved filter for statistics page)
 - `created_at`, `updated_at`: Timestamps
 
+## Design Philosophy
+
+The interface is designed around a simple tap-based interaction model optimized for touch screens:
+
+### Adding Slots
+
+1. **Select a project** from the dropdown in the footer
+2. **Tap empty time slots** to add 15-minute blocks for that project
+3. **Tap again on the same slot** to remove it (toggle behavior)
+
+**Why it works this way:**
+- **Toggle behavior** makes it fast and easy to add/remove slots without needing separate delete actions
+- **Tap instead of drag** is more reliable on touch screens and prevents accidental selections
+- **15-minute increments** provide precision while keeping the interface clean
+
+### Adding Notes to Slots
+
+1. **Tap a slot that already exists** → Opens the expandable section below
+2. **Tap "Add note"** button → Opens note dialog
+3. **Type your note** and save
+4. **Tap the slot again** to collapse the section when done
+
+**Why it works this way:**
+- **Requires two taps** (first to add slot, second to open actions) prevents the expandable section from opening every time you're quickly adding multiple slots
+- **Expandable section** keeps the interface clean and uncluttered when you're just adding slots
+- **Large buttons** in the expanded area are easy to tap on touch screens
+
+### Editing or Deleting Slots
+
+1. **Tap the slot** to open the expandable section
+2. **Tap "Edit note"** to modify the note, or **"Delete"** to remove the slot
+3. The section collapses automatically after deletion
+
+**Why it works this way:**
+- **Actions are hidden until needed** to maintain a clean visual timeline
+- **Smooth 200ms animation** provides visual feedback without feeling jarring
+- **Separate expansion area** with distinct background color clearly shows which slot you're editing
+
 ## Usage
 
 1. **Sign In**: Use GitHub OAuth or magic email link to authenticate
@@ -113,11 +151,7 @@ The app uses three main tables:
    - Set your preferred day start and end times
    - Toggle between light and dark themes
 
-4. **Track Time**: On the daily view:
-   - Select a project from the footer dropdown
-   - Tap empty slots to add 15-minute time blocks
-   - Tap existing slots to show Note and Delete buttons
-   - Click the Note button to add notes about what you worked on
+4. **Track Time**: See the Design Philosophy section above for detailed interaction patterns
 
 5. **Navigate Days**: Use the arrow buttons or calendar picker to switch between days
 
