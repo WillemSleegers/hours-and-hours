@@ -17,23 +17,6 @@ export interface TimeSlot {
   updated_at?: string;
 }
 
-// For backward compatibility and rendering - group consecutive slots into entries
-export interface TimeEntry {
-  id: string; // Will use the first slot's ID
-  project_id: string;
-  date: string;
-  start_time: number;
-  end_time: number;
-  slot_ids: string[]; // Track which slots belong to this visual entry
-  note?: string | null; // Note from the first slot
-}
-
-export interface TimeBlock {
-  start: number;
-  end: number;
-  projectId?: string;
-}
-
 export interface UserSettings {
   id: string;
   day_start_hour: number;

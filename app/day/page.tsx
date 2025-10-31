@@ -31,7 +31,7 @@ function DayStatsContent() {
     dateParam ? new Date(dateParam) : new Date()
   );
 
-  const { slots, entries } = useTimeSlots(currentDate);
+  const { slots } = useTimeSlots(currentDate);
 
   // Redirect to login if not authenticated
   useEffect(() => {
