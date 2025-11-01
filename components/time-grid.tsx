@@ -1,10 +1,16 @@
 "use client"
 
-import { useState, Fragment, useEffect } from "react"
+import { useState, Fragment, useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
 import { Project, TimeSlot } from "@/lib/types"
-import { NoteDialog } from "./note-dialog"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Trash2 } from "lucide-react"
 
 interface TimeGridProps {
   slots: TimeSlot[]
@@ -27,9 +33,30 @@ export function TimeGrid({
   dayStartHour = 0,
   dayEndHour = 24,
 }: TimeGridProps) {
-  const [noteDialogOpen, setNoteDialogOpen] = useState(false)
-  const [editingSlot, setEditingSlot] = useState<TimeSlot | null>(null)
   const [selectedSlotTime, setSelectedSlotTime] = useState<number | null>(null)
+  const [localNotes, setLocalNotes] = useState<Record<string, string>>({})
+  const debounceTimers = useRef<Record<string, NodeJS.Timeout>>({})
+
+  // Debounced note update
+  const debouncedNoteUpdate = (slotId: string, note: string) => {
+    // Clear existing timer for this slot
+    if (debounceTimers.current[slotId]) {
+      clearTimeout(debounceTimers.current[slotId])
+    }
+
+    // Set new timer
+    debounceTimers.current[slotId] = setTimeout(() => {
+      onNoteUpdate(slotId, note)
+      delete debounceTimers.current[slotId]
+    }, 500) // 500ms debounce delay
+  }
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(debounceTimers.current).forEach(timer => clearTimeout(timer))
+    }
+  }, [])
 
   // Always display 15-minute slots for visual precision
   const displayIncrementInHours = 0.25 // 15 minutes
@@ -60,17 +87,6 @@ export function TimeGrid({
 
   // All 15-minute slots have the same height
   const slotHeight = "h-10"
-
-  const handleNoteEdit = (slot: TimeSlot) => {
-    setEditingSlot(slot)
-    setNoteDialogOpen(true)
-  }
-
-  const handleNoteSave = (note: string) => {
-    if (editingSlot) {
-      onNoteUpdate(editingSlot.id, note)
-    }
-  }
 
   // Handle slot click - create slot or toggle selection
   const handleSlotClick = (time: number) => {
@@ -115,6 +131,43 @@ export function TimeGrid({
     return project?.name || "Unknown"
   }
 
+  // Delete all consecutive slots for the same project (delete entire entry)
+  const handleDeleteEntry = (slot: TimeSlot) => {
+    const projectId = slot.project_id
+    const slotTime = slot.time_slot
+
+    // Find all consecutive slots with the same project
+    const slotsToDelete: TimeSlot[] = []
+
+    // Go backwards from current slot
+    let checkTime = slotTime
+    while (true) {
+      const checkSlot = getSlotForTime(checkTime)
+      if (checkSlot && checkSlot.project_id === projectId) {
+        slotsToDelete.unshift(checkSlot)
+        checkTime -= 0.25
+      } else {
+        break
+      }
+    }
+
+    // Go forwards from current slot (skip the current one as it's already added)
+    checkTime = slotTime + 0.25
+    while (true) {
+      const checkSlot = getSlotForTime(checkTime)
+      if (checkSlot && checkSlot.project_id === projectId) {
+        slotsToDelete.push(checkSlot)
+        checkTime += 0.25
+      } else {
+        break
+      }
+    }
+
+    // Delete all slots in the entry
+    slotsToDelete.forEach(s => onSlotDelete(s.id))
+    setSelectedSlotTime(null)
+  }
+
   // Clear selection when project is cleared
   useEffect(() => {
     if (!activeProjectId) {
@@ -144,7 +197,7 @@ export function TimeGrid({
               {/* Slot content - clickable bar */}
               <div
                 className={cn(
-                  "flex items-center gap-1.5 px-3",
+                  "flex items-center justify-between gap-1.5 px-3",
                   slotHeight,
                   (activeProjectId || slot) && "cursor-pointer",
                   slot && "text-sm rounded-lg"
@@ -166,9 +219,48 @@ export function TimeGrid({
                     {getProjectName(slot.project_id)}
                   </span>
                 )}
+                {slot && isSelected && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                        }}
+                        className="h-6 w-6 p-0 rounded shrink-0 ml-auto"
+                        style={{
+                          backgroundColor: `${getProjectColor(slot.project_id)}30`,
+                          color: getProjectColor(slot.project_id),
+                        }}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onSlotDelete(slot.id)
+                          setSelectedSlotTime(null)
+                        }}
+                      >
+                        Delete slot
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDeleteEntry(slot)
+                        }}
+                      >
+                        Delete entry
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
               </div>
 
-              {/* Expandable section - note and actions */}
+              {/* Expandable section - note input */}
               {slot && (
                 <div
                   className="overflow-hidden grid"
@@ -179,59 +271,35 @@ export function TimeGrid({
                 >
                   <div className="min-h-0">
                     <div
-                      className="px-3 py-1.5 space-y-1.5 rounded-lg border-t border-border/30 mt-px"
+                      className={cn(
+                        "px-3 rounded-lg border-t border-border/30 mt-px flex items-center",
+                        slotHeight
+                      )}
                       style={{
                         backgroundColor: `${getProjectColor(slot.project_id)}20`,
                       }}
                     >
-                      {/* Note display/edit */}
-                      {slot.note && (
-                        <div
-                          className="text-sm"
-                          style={{ color: getProjectColor(slot.project_id) }}
-                        >
-                          {slot.note}
-                        </div>
-                      )}
-
-                      {/* Action buttons */}
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleNoteEdit(slot)
-                          }}
-                          className="h-8 px-3 shrink-0 rounded-lg"
-                          style={{
-                            backgroundColor: `${getProjectColor(
-                              slot.project_id
-                            )}30`,
-                            color: getProjectColor(slot.project_id),
-                          }}
-                        >
-                          {slot.note ? "Edit note" : "Add note"}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            onSlotDelete(slot.id)
-                            setSelectedSlotTime(null)
-                          }}
-                          className="h-8 px-3 shrink-0 rounded-lg"
-                          style={{
-                            backgroundColor: `${getProjectColor(
-                              slot.project_id
-                            )}30`,
-                            color: getProjectColor(slot.project_id),
-                          }}
-                        >
-                          Delete
-                        </Button>
-                      </div>
+                      <input
+                        type="text"
+                        value={localNotes[slot.id] ?? slot.note ?? ""}
+                        onChange={(e) => {
+                          e.stopPropagation()
+                          const newNote = e.target.value
+                          // Update local state immediately for responsive UI
+                          setLocalNotes(prev => ({ ...prev, [slot.id]: newNote }))
+                          // Debounce the actual update
+                          debouncedNoteUpdate(slot.id, newNote)
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.currentTarget.blur()
+                          }
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        placeholder="Add a note..."
+                        className="text-sm w-full bg-transparent border-none outline-none placeholder:opacity-50"
+                        style={{ color: getProjectColor(slot.project_id) }}
+                      />
                     </div>
                   </div>
                 </div>
@@ -248,14 +316,6 @@ export function TimeGrid({
         </span>
       </div>
       <div className="border-t border-border/30" />
-
-      <NoteDialog
-        open={noteDialogOpen}
-        onClose={() => setNoteDialogOpen(false)}
-        onSave={handleNoteSave}
-        initialNote={editingSlot?.note}
-        projectName={editingSlot ? getProjectName(editingSlot.project_id) : ""}
-      />
     </div>
   )
 }
