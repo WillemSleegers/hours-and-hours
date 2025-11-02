@@ -27,7 +27,7 @@ export default function Home() {
   }, [authLoading, user, router])
 
   const { projects, isLoading: projectsLoading } = useProjects()
-  const { slots, toggleSlot, deleteSlots, updateNote } =
+  const { slots, toggleSlot, replaceSlot, deleteSlots, updateNote } =
     useTimeSlots(currentDate)
   const {
     settings,
@@ -154,6 +154,7 @@ export default function Home() {
             slots={slots}
             projects={projects}
             onSlotToggle={toggleSlot}
+            onSlotReplace={replaceSlot}
             onSlotDelete={handleSlotDelete}
             onNoteUpdate={updateNote}
             activeProjectId={activeProjectId}

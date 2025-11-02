@@ -10,12 +10,21 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Trash2 } from "lucide-react"
 
 interface TimeGridProps {
   slots: TimeSlot[]
   projects: Project[]
   onSlotToggle: (projectId: string, timeSlot: number) => void
+  onSlotReplace: (slotId: string, newProjectId: string) => void
   onSlotDelete: (slotId: string) => void
   onNoteUpdate: (slotId: string, note: string) => void
   activeProjectId: string | null
@@ -27,6 +36,7 @@ export function TimeGrid({
   slots,
   projects,
   onSlotToggle,
+  onSlotReplace,
   onSlotDelete,
   onNoteUpdate,
   activeProjectId,
@@ -36,6 +46,18 @@ export function TimeGrid({
   const [selectedSlotTime, setSelectedSlotTime] = useState<number | null>(null)
   const [localNotes, setLocalNotes] = useState<Record<string, string>>({})
   const debounceTimers = useRef<Record<string, NodeJS.Timeout>>({})
+  const [confirmReplaceSlot, setConfirmReplaceSlot] = useState<{slot: TimeSlot, newProjectId: string} | null>(null)
+
+  // Sync localNotes with actual slot notes when slots change
+  useEffect(() => {
+    const newLocalNotes: Record<string, string> = {}
+    slots.forEach(slot => {
+      if (slot.note) {
+        newLocalNotes[slot.id] = slot.note
+      }
+    })
+    setLocalNotes(newLocalNotes)
+  }, [slots])
 
   // Debounced note update
   const debouncedNoteUpdate = (slotId: string, note: string) => {
@@ -88,6 +110,7 @@ export function TimeGrid({
   // All 15-minute slots have the same height
   const slotHeight = "h-10"
 
+
   // Handle slot click - create slot or toggle selection
   const handleSlotClick = (time: number) => {
     const snappedTime = snapToIncrement(time)
@@ -98,18 +121,30 @@ export function TimeGrid({
       if (slot) {
         if (slot.project_id === activeProjectId) {
           // Same project: toggle expandable section
-          setSelectedSlotTime(selectedSlotTime === snappedTime ? null : snappedTime)
+          setSelectedSlotTime(prev => prev === snappedTime ? null : snappedTime)
+        } else {
+          // Different project: replace slot (with confirmation if it has a note)
+          setSelectedSlotTime(null)
+          if (slot.note && slot.note.trim() !== "") {
+            // Show confirmation dialog
+            setConfirmReplaceSlot({ slot, newProjectId: activeProjectId })
+          } else {
+            // No note, replace immediately
+            onSlotReplace(slot.id, activeProjectId)
+          }
         }
-        // Different project: do nothing
       } else {
-        // Empty slot: add slot but don't select it
+        // Empty slot: add slot and close any open expandable section
+        setSelectedSlotTime(null)
         onSlotToggle(activeProjectId, snappedTime)
-        // Don't set selectedSlotTime - user needs to click again to open it
       }
     } else {
       // No active project: toggle expandable section if slot exists
       if (slot) {
-        setSelectedSlotTime(selectedSlotTime === snappedTime ? null : snappedTime)
+        setSelectedSlotTime(prev => prev === snappedTime ? null : snappedTime)
+      } else {
+        // Close any open section when clicking empty slot
+        setSelectedSlotTime(null)
       }
     }
   }
@@ -316,6 +351,39 @@ export function TimeGrid({
         </span>
       </div>
       <div className="border-t border-border/30" />
+
+      {/* Confirmation dialog for replacing slot with note */}
+      <Dialog open={!!confirmReplaceSlot} onOpenChange={(open) => !open && setConfirmReplaceSlot(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Replace slot with note?</DialogTitle>
+            <DialogDescription>
+              This slot has a note: &quot;{confirmReplaceSlot?.slot.note}&quot;
+              <br />
+              <br />
+              Replacing it will delete this note. Do you want to continue?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setConfirmReplaceSlot(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (confirmReplaceSlot) {
+                  onSlotReplace(confirmReplaceSlot.slot.id, confirmReplaceSlot.newProjectId)
+                  setConfirmReplaceSlot(null)
+                }
+              }}
+            >
+              Replace
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

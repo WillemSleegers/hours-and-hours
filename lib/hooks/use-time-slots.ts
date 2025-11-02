@@ -38,9 +38,9 @@ export function useTimeSlots(date: Date) {
   const slots = allSlots.filter((slot) => slot.date === dateString);
 
   const toggleSlot = async (projectId: string, timeSlot: number) => {
-    // Check if slot already exists
-    const existingSlot = slots.find(
-      (s) => s.time_slot === timeSlot && s.project_id === projectId
+    // Check if slot already exists - use allSlots to get latest state
+    const existingSlot = allSlots.find(
+      (s) => s.date === dateString && s.time_slot === timeSlot && s.project_id === projectId
     );
 
     if (existingSlot) {
@@ -55,6 +55,7 @@ export function useTimeSlots(date: Date) {
           .eq("id", existingSlot.id);
 
         if (error) throw error;
+        toast.success("Slot removed");
       } catch (error) {
         // Rollback on error
         setAllSlots(oldSlots);
@@ -98,6 +99,7 @@ export function useTimeSlots(date: Date) {
           prev.map((s) => (s.id === tempId ? (data as TimeSlot) : s))
         );
 
+        toast.success("Slot added");
         return data;
       } catch (error) {
         // Rollback on error
@@ -106,6 +108,67 @@ export function useTimeSlots(date: Date) {
         toast.error("Failed to add slot");
         throw error;
       }
+    }
+  };
+
+  const replaceSlot = async (slotId: string, newProjectId: string) => {
+    // Find the slot to replace
+    const slotToReplace = allSlots.find((s) => s.id === slotId);
+    if (!slotToReplace) return;
+
+    const oldSlots = [...allSlots];
+    const tempId = `temp-${Date.now()}`;
+    const newSlot: TimeSlot = {
+      id: tempId,
+      project_id: newProjectId,
+      date: slotToReplace.date,
+      time_slot: slotToReplace.time_slot,
+    };
+
+    // Optimistic update - replace old slot with new one atomically
+    setAllSlots((prev) =>
+      prev.map((s) => (s.id === slotId ? newSlot : s))
+    );
+
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
+      // Delete old slot and insert new one
+      const { error: deleteError } = await supabase
+        .from("time_slots")
+        .delete()
+        .eq("id", slotId);
+
+      if (deleteError) throw deleteError;
+
+      const { data, error: insertError } = await supabase
+        .from("time_slots")
+        .insert({
+          project_id: newProjectId,
+          date: slotToReplace.date,
+          time_slot: slotToReplace.time_slot,
+          user_id: user.id,
+        })
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+
+      // Replace temp slot with real one
+      setAllSlots((prev) =>
+        prev.map((s) => (s.id === tempId ? (data as TimeSlot) : s))
+      );
+
+      toast.success("Slot replaced");
+      return data;
+    } catch (error) {
+      // Rollback on error
+      setAllSlots(oldSlots);
+      console.error("Error replacing slot:", error);
+      toast.error("Failed to replace slot");
+      throw error;
     }
   };
 
@@ -174,6 +237,7 @@ export function useTimeSlots(date: Date) {
     slots,
     isLoading,
     toggleSlot,
+    replaceSlot,
     deleteSlots,
     updateNote,
   };
