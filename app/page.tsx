@@ -133,7 +133,7 @@ export default function Home() {
       <Header totalHours={totalHours} currentDate={currentDate} />
 
       {/* Time grid */}
-      <main className="px-3">
+      <main className="px-3 pb-3">
         <div className="container mx-auto max-w-4xl">
           {canShowEarlier && (
             <div className="flex justify-center">

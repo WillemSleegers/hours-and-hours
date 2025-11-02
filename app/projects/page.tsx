@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { ChevronLeft, Plus, Edit, Trash2, Archive, ArchiveRestore } from "lucide-react";
+import { Plus, Edit, Trash2, Archive, ArchiveRestore } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Header } from "@/components/header";
 import { ProjectForm } from "@/components/project-form";
 import { useProjects } from "@/lib/hooks/use-projects";
 import { useAuth } from "@/lib/hooks/use-auth";
@@ -69,19 +69,10 @@ export default function ProjectsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-          <Link href="/">
-            <Button variant="ghost" size="icon">
-              <ChevronLeft className="h-5 w-5" />
-            </Button>
-          </Link>
-          <h1 className="text-2xl font-bold">Projects</h1>
-        </div>
-      </header>
+    <div className="bg-background max-w-xl mx-auto min-h-screen">
+      <Header title="Projects" showBack />
 
-      <main className="container mx-auto px-4 py-6">
+      <main className="px-3 pb-3">
 
         <div className="space-y-3">
           {isLoading ? (

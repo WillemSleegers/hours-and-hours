@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { format } from "date-fns"
-import { BarChart3, Folder, Settings, LogOut, Menu } from "lucide-react"
+import { BarChart3, Folder, Settings, LogOut, Menu, ChevronLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -17,11 +17,13 @@ import { signOut } from "@/lib/auth"
 import { toast } from "sonner"
 
 interface HeaderProps {
-  totalHours: number
-  currentDate: Date
+  totalHours?: number
+  currentDate?: Date
+  title?: string
+  showBack?: boolean
 }
 
-export function Header({ totalHours, currentDate }: HeaderProps) {
+export function Header({ totalHours, currentDate, title, showBack = false }: HeaderProps) {
   const { user } = useAuth()
   const router = useRouter()
 
@@ -39,24 +41,41 @@ export function Header({ totalHours, currentDate }: HeaderProps) {
   return (
     <header className="sticky top-0 z-50 bg-transparent p-3">
       <div className="bg-card border border-border rounded-2xl px-3 py-2 flex items-center justify-between">
-        <Button
-          variant="ghost"
-          onClick={() =>
-            router.push(`/day?date=${format(currentDate, "yyyy-MM-dd")}`)
-          }
-          className="h-auto px-3 py-1.5 hover:bg-accent flex items-end gap-1.5"
-        >
-          <span className="text-xl font-bold tabular-nums leading-none">
-            {totalHours.toFixed(1)}
-          </span>
-          <span className="text-xs text-muted-foreground font-medium leading-none pb-0.5">
-            hrs today
-          </span>
-        </Button>
+        {showBack ? (
+          <Button
+            variant="ghost"
+            onClick={() => router.push("/")}
+            className="gap-1 -ml-2"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Back
+          </Button>
+        ) : totalHours !== undefined && currentDate ? (
+          <Button
+            variant="ghost"
+            onClick={() =>
+              router.push(`/day?date=${format(currentDate, "yyyy-MM-dd")}`)
+            }
+            className="h-auto px-3 py-1.5 hover:bg-accent flex items-end gap-1.5"
+          >
+            <span className="text-xl font-bold tabular-nums leading-none">
+              {totalHours.toFixed(1)}
+            </span>
+            <span className="text-xs text-muted-foreground font-medium leading-none pb-0.5">
+              hrs today
+            </span>
+          </Button>
+        ) : (
+          <div />
+        )}
         <div className="text-center">
-          <div className="text-base font-semibold">
-            {format(currentDate, "EEE, MMM d")}
-          </div>
+          {title ? (
+            <h1 className="text-base font-semibold">{title}</h1>
+          ) : currentDate ? (
+            <div className="text-base font-semibold">
+              {format(currentDate, "EEE, MMM d")}
+            </div>
+          ) : null}
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

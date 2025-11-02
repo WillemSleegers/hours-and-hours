@@ -2,7 +2,6 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
 import { format, addDays, subDays } from "date-fns";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { Header } from "@/components/header";
 import { useProjects } from "@/lib/hooks/use-projects";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { useTimeSlots } from "@/lib/hooks/use-time-slots";
@@ -108,19 +108,10 @@ function DayStatsContent() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-          <Link href="/">
-            <Button variant="ghost" size="icon">
-              <ChevronLeft className="h-5 w-5" />
-            </Button>
-          </Link>
-          <h1 className="text-2xl font-bold">Daily Breakdown</h1>
-        </div>
-      </header>
+    <div className="bg-background max-w-xl mx-auto min-h-screen">
+      <Header title="Daily Breakdown" showBack />
 
-      <main className="container mx-auto px-4 py-6">
+      <main className="px-3 pb-3">
         {/* Date Navigation */}
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">

@@ -2,13 +2,11 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
 import { useTheme } from "next-themes";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Header } from "@/components/header";
 import { useUserSettings } from "@/lib/hooks/use-user-settings";
 import { useAuth } from "@/lib/hooks/use-auth";
 
@@ -40,19 +38,10 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-          <Link href="/">
-            <Button variant="ghost" size="icon">
-              <ChevronLeft className="h-5 w-5" />
-            </Button>
-          </Link>
-          <h1 className="text-2xl font-bold">Settings</h1>
-        </div>
-      </header>
+    <div className="bg-background max-w-xl mx-auto min-h-screen">
+      <Header title="Settings" showBack />
 
-      <main className="container mx-auto px-4 py-8 max-w-3xl space-y-6">
+      <main className="px-3 pb-3 space-y-3">
         <Card>
           <CardHeader>
             <CardTitle>Appearance</CardTitle>
