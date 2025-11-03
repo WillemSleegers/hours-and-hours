@@ -40,34 +40,32 @@ export function Header({ totalHours, currentDate, title, showBack = false }: Hea
 
   return (
     <header className="sticky top-0 z-50 bg-transparent p-3">
-      <div className="bg-card border border-border rounded-2xl px-3 py-2 flex items-center justify-between">
-        {showBack ? (
-          <Button
-            variant="ghost"
-            onClick={() => router.push("/")}
-            className="gap-1 -ml-2"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Back
-          </Button>
-        ) : totalHours !== undefined && currentDate ? (
-          <Button
-            variant="ghost"
-            onClick={() =>
-              router.push(`/day?date=${format(currentDate, "yyyy-MM-dd")}`)
-            }
-            className="h-auto px-3 py-1.5 hover:bg-accent flex items-end gap-1.5"
-          >
-            <span className="text-xl font-bold tabular-nums leading-none">
-              {totalHours.toFixed(1)}
-            </span>
-            <span className="text-xs text-muted-foreground font-medium leading-none pb-0.5">
-              hrs today
-            </span>
-          </Button>
-        ) : (
-          <div />
-        )}
+      <div className="bg-card border border-border rounded-2xl px-3 py-2 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+        <div className="flex justify-start">
+          {showBack ? (
+            <Button
+              variant="ghost"
+              onClick={() => router.push("/")}
+            >
+              Back
+            </Button>
+          ) : totalHours !== undefined && currentDate ? (
+            <Button
+              variant="ghost"
+              onClick={() =>
+                router.push(`/day?date=${format(currentDate, "yyyy-MM-dd")}`)
+              }
+              className="h-auto px-3 py-1.5 hover:bg-accent flex items-end gap-1.5"
+            >
+              <span className="text-xl font-bold tabular-nums leading-none">
+                {totalHours.toFixed(1)}
+              </span>
+              <span className="text-xs text-muted-foreground font-medium leading-none pb-0.5">
+                hrs today
+              </span>
+            </Button>
+          ) : null}
+        </div>
         <div className="text-center">
           {title ? (
             <h1 className="text-base font-semibold">{title}</h1>
@@ -77,41 +75,43 @@ export function Header({ totalHours, currentDate, title, showBack = false }: Hea
             </div>
           ) : null}
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <Menu className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>
-              <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">Account</p>
-                <p className="text-xs leading-none text-muted-foreground">
-                  {user?.email}
-                </p>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => router.push("/statistics")}>
-              <BarChart3 className="mr-2 h-4 w-4" />
-              Statistics
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => router.push("/projects")}>
-              <Folder className="mr-2 h-4 w-4" />
-              Projects
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => router.push("/settings")}>
-              <Settings className="mr-2 h-4 w-4" />
-              Settings
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleSignOut}>
-              <LogOut className="mr-2 h-4 w-4" />
-              Sign out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex justify-end">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Menu className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">Account</p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {user?.email}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => router.push("/statistics")}>
+                <BarChart3 className="mr-2 h-4 w-4" />
+                Statistics
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push("/projects")}>
+                <Folder className="mr-2 h-4 w-4" />
+                Projects
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push("/settings")}>
+                <Settings className="mr-2 h-4 w-4" />
+                Settings
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleSignOut}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </header>
   )

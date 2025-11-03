@@ -271,49 +271,47 @@ export default function StatisticsPage() {
           </CardContent>
         </Card>
 
-        <div className="space-y-3">
-          {isLoading ? (
-            <Card>
-              <CardContent className="text-center text-muted-foreground text-sm">
+        <Card className="py-0">
+          <CardContent className="!p-0">
+            {isLoading ? (
+              <div className="text-center text-muted-foreground text-sm py-8">
                 Loading statistics...
-              </CardContent>
-            </Card>
-          ) : projects.length === 0 ? (
-            <Card>
-              <CardContent className="text-center text-muted-foreground text-sm">
+              </div>
+            ) : projects.length === 0 ? (
+              <div className="text-center text-muted-foreground text-sm py-8">
                 No projects yet. Add a project to get started!
-              </CardContent>
-            </Card>
-          ) : (
-            stats.map((stat) => {
-              const project = getProject(stat.projectId);
+              </div>
+            ) : (
+              <div className="divide-y divide-border/50">
+                {stats.map((stat) => {
+                  const project = getProject(stat.projectId);
 
-              return (
-                <Card key={stat.projectId} className={project?.archived ? "opacity-60" : ""}>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          className="w-3 h-3 rounded-full p-0"
-                          style={{ backgroundColor: project?.color || "#94a3b8" }}
-                        />
-                        <span className="font-semibold text-lg">
-                          {project?.name || "Unknown Project"}
-                          {project?.archived && (
-                            <span className="ml-2 text-xs text-muted-foreground font-normal">
-                              (archived)
-                            </span>
-                          )}
-                        </span>
+                  return (
+                    <div key={stat.projectId} className={`px-4 py-3 ${project?.archived ? "opacity-60" : ""}`}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            className="w-3 h-3 rounded-full p-0"
+                            style={{ backgroundColor: project?.color || "#94a3b8" }}
+                          />
+                          <span className="font-semibold text-lg">
+                            {project?.name || "Unknown Project"}
+                            {project?.archived && (
+                              <span className="ml-2 text-xs text-muted-foreground font-normal">
+                                (archived)
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                        <div className="text-xl font-bold">{stat.totalHours}h</div>
                       </div>
-                      <div className="text-xl font-bold">{stat.totalHours}h</div>
                     </div>
-                  </CardContent>
-                </Card>
-              );
-            })
-          )}
-        </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </main>
     </div>
   );
