@@ -10,7 +10,11 @@ export function useAuth() {
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      // Suppress "refresh token not found" errors on new devices - this is expected
+      if (error && !error.message.includes("Refresh Token Not Found")) {
+        console.error("Auth error:", error);
+      }
       setUser(session?.user ?? null);
       setLoading(false);
     });

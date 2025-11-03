@@ -7,7 +7,6 @@ import { toast } from "sonner";
 
 export function useTimeSlots(date: Date) {
   const [allSlots, setAllSlots] = useState<TimeSlot[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
   const dateString = date.toISOString().split("T")[0];
 
@@ -25,8 +24,6 @@ export function useTimeSlots(date: Date) {
       } catch (error) {
         console.error("Error loading time slots:", error);
         toast.error("Failed to load time slots");
-      } finally {
-        setIsLoading(false);
       }
     };
 
@@ -38,76 +35,55 @@ export function useTimeSlots(date: Date) {
   const slots = allSlots.filter((slot) => slot.date === dateString);
 
   const toggleSlot = async (projectId: string, timeSlot: number) => {
-    // Check if slot already exists - use allSlots to get latest state
-    const existingSlot = allSlots.find(
-      (s) => s.date === dateString && s.time_slot === timeSlot && s.project_id === projectId
-    );
+    // Add the slot with optimistic update
+    const tempId = `temp-${Date.now()}-${Math.random()}`;
+    const newSlot: TimeSlot = {
+      id: tempId,
+      project_id: projectId,
+      date: dateString,
+      time_slot: timeSlot,
+    };
 
-    if (existingSlot) {
-      // Delete the slot
-      const oldSlots = [...allSlots];
-      setAllSlots((prev) => prev.filter((s) => s.id !== existingSlot.id));
-
-      try {
-        const { error } = await supabase
-          .from("time_slots")
-          .delete()
-          .eq("id", existingSlot.id);
-
-        if (error) throw error;
-        toast.success("Slot removed");
-      } catch (error) {
-        // Rollback on error
-        setAllSlots(oldSlots);
-        console.error("Error deleting slot:", error);
-        toast.error("Failed to delete slot");
-        throw error;
+    // Optimistic update - insert in sorted position
+    setAllSlots((prev) => {
+      const insertIndex = prev.findIndex(s => s.time_slot > timeSlot);
+      if (insertIndex === -1) {
+        return [...prev, newSlot];
       }
-    } else {
-      // Add the slot
-      const tempId = `temp-${Date.now()}`;
-      const newSlot: TimeSlot = {
-        id: tempId,
-        project_id: projectId,
-        date: dateString,
-        time_slot: timeSlot,
-      };
+      return [...prev.slice(0, insertIndex), newSlot, ...prev.slice(insertIndex)];
+    });
 
-      // Optimistic update
-      setAllSlots((prev) => [...prev, newSlot].sort((a, b) => a.time_slot - b.time_slot));
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
 
-      try {
-        // Get current user
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error("User not authenticated");
+      const { data, error } = await supabase
+        .from("time_slots")
+        .insert({
+          project_id: projectId,
+          date: dateString,
+          time_slot: timeSlot,
+          user_id: user.id,
+        })
+        .select()
+        .single();
 
-        const { data, error } = await supabase
-          .from("time_slots")
-          .insert({
-            project_id: projectId,
-            date: dateString,
-            time_slot: timeSlot,
-            user_id: user.id,
-          })
-          .select()
-          .single();
+      if (error) throw error;
 
-        if (error) throw error;
+      // Replace temp slot with real one
+      setAllSlots((prev) =>
+        prev.map((s) => (s.id === tempId ? (data as TimeSlot) : s))
+      );
 
-        // Replace temp slot with real one
-        setAllSlots((prev) =>
-          prev.map((s) => (s.id === tempId ? (data as TimeSlot) : s))
-        );
-
-        toast.success("Slot added");
-        return data;
-      } catch (error) {
-        // Rollback on error
-        setAllSlots((prev) => prev.filter((s) => s.id !== tempId));
-        console.error("Error adding slot:", error);
-        toast.error("Failed to add slot");
-        throw error;
-      }
+      toast.success("Slot added");
+      return data;
+    } catch (error) {
+      // Rollback on error
+      setAllSlots((prev) => prev.filter((s) => s.id !== tempId));
+      console.error("Error adding slot:", error);
+      toast.error("Failed to add slot");
+      throw error;
     }
   };
 
@@ -235,7 +211,6 @@ export function useTimeSlots(date: Date) {
 
   return {
     slots,
-    isLoading,
     toggleSlot,
     replaceSlot,
     deleteSlots,

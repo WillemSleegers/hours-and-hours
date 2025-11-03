@@ -47,6 +47,7 @@ export function TimeGrid({
   const [localNotes, setLocalNotes] = useState<Record<string, string>>({})
   const debounceTimers = useRef<Record<string, NodeJS.Timeout>>({})
   const [confirmReplaceSlot, setConfirmReplaceSlot] = useState<{slot: TimeSlot, newProjectId: string} | null>(null)
+  const pointerDownPos = useRef<{ x: number; y: number } | null>(null)
 
   // Sync localNotes with actual slot notes when slots change
   useEffect(() => {
@@ -110,7 +111,6 @@ export function TimeGrid({
   // All 15-minute slots have the same height
   const slotHeight = "h-10"
 
-
   // Handle slot click - create slot or toggle selection
   const handleSlotClick = (time: number) => {
     const snappedTime = snapToIncrement(time)
@@ -119,9 +119,15 @@ export function TimeGrid({
     if (activeProjectId) {
       // Project is active
       if (slot) {
-        if (slot.project_id === activeProjectId) {
-          // Same project: toggle expandable section
+        // Check if this is a temporary slot (being added optimistically)
+        const isTemporarySlot = slot.id.startsWith('temp-')
+
+        if (slot.project_id === activeProjectId && !isTemporarySlot) {
+          // Same project and not temporary: toggle expandable section
           setSelectedSlotTime(prev => prev === snappedTime ? null : snappedTime)
+        } else if (isTemporarySlot) {
+          // Temporary slot: do nothing, let the optimistic update complete
+          return
         } else {
           // Different project: replace slot (with confirmation if it has a note)
           setSelectedSlotTime(null)
@@ -141,7 +147,10 @@ export function TimeGrid({
     } else {
       // No active project: toggle expandable section if slot exists
       if (slot) {
-        setSelectedSlotTime(prev => prev === snappedTime ? null : snappedTime)
+        const isTemporarySlot = slot.id.startsWith('temp-')
+        if (!isTemporarySlot) {
+          setSelectedSlotTime(prev => prev === snappedTime ? null : snappedTime)
+        }
       } else {
         // Close any open section when clicking empty slot
         setSelectedSlotTime(null)
@@ -232,7 +241,7 @@ export function TimeGrid({
               {/* Slot content - clickable bar */}
               <div
                 className={cn(
-                  "flex items-center justify-between gap-1.5 px-3",
+                  "flex items-center gap-1.5 px-3",
                   slotHeight,
                   (activeProjectId || slot) && "cursor-pointer",
                   slot && "text-sm rounded-lg"
@@ -247,19 +256,50 @@ export function TimeGrid({
                       }
                     : undefined
                 }
-                onClick={() => handleSlotClick(time)}
+                onPointerDown={(e) => {
+                  pointerDownPos.current = { x: e.clientX, y: e.clientY }
+                }}
+                onPointerUp={(e) => {
+                  if (pointerDownPos.current) {
+                    const dx = Math.abs(e.clientX - pointerDownPos.current.x)
+                    const dy = Math.abs(e.clientY - pointerDownPos.current.y)
+                    // Only fire click if pointer didn't move much (not a scroll)
+                    if (dx < 10 && dy < 10) {
+                      handleSlotClick(time)
+                    }
+                    pointerDownPos.current = null
+                  }
+                }}
+                onPointerCancel={() => {
+                  pointerDownPos.current = null
+                }}
               >
-                {slot && isFirst && (
-                  <span className="font-bold tracking-tight shrink-0">
-                    {getProjectName(slot.project_id)}
-                  </span>
-                )}
+                <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                  {slot && isFirst && (
+                    <span className="font-bold tracking-tight shrink-0">
+                      {getProjectName(slot.project_id)}
+                    </span>
+                  )}
+                  {slot && !isSelected && slot.note && (
+                    <span className="text-sm truncate">
+                      {localNotes[slot.id] ?? slot.note}
+                    </span>
+                  )}
+                </div>
                 {slot && isSelected && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
                         size="sm"
                         variant="ghost"
+                        onPointerDown={(e) => {
+                          e.stopPropagation()
+                          pointerDownPos.current = null
+                        }}
+                        onPointerUp={(e) => {
+                          e.stopPropagation()
+                          pointerDownPos.current = null
+                        }}
                         onClick={(e) => {
                           e.stopPropagation()
                         }}
@@ -274,8 +314,10 @@ export function TimeGrid({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
                       <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation()
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onPointerUp={(e) => e.stopPropagation()}
+                        onSelect={(e) => {
+                          e.preventDefault()
                           onSlotDelete(slot.id)
                           setSelectedSlotTime(null)
                         }}
@@ -283,8 +325,10 @@ export function TimeGrid({
                         Delete slot
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation()
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onPointerUp={(e) => e.stopPropagation()}
+                        onSelect={(e) => {
+                          e.preventDefault()
                           handleDeleteEntry(slot)
                         }}
                       >
@@ -330,6 +374,8 @@ export function TimeGrid({
                             e.currentTarget.blur()
                           }
                         }}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onPointerUp={(e) => e.stopPropagation()}
                         onClick={(e) => e.stopPropagation()}
                         placeholder="Add a note..."
                         className="text-sm w-full bg-transparent border-none outline-none placeholder:opacity-50"
