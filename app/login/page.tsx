@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Field, FieldLabel } from "@/components/ui/field"
 import { signInWithGithub, signInWithMagicLink } from "@/lib/auth"
 import { toast } from "sonner"
 import { Github, Mail, Clock } from "lucide-react"
@@ -111,10 +111,10 @@ export default function LoginPage() {
 
               {/* Magic Link Form */}
               <form onSubmit={handleMagicLinkLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">
+                <Field>
+                  <FieldLabel htmlFor="email">
                     Email address
-                  </Label>
+                  </FieldLabel>
                   <Input
                     id="email"
                     type="email"
@@ -125,7 +125,7 @@ export default function LoginPage() {
                     className="h-12"
                     required
                   />
-                </div>
+                </Field>
                 <Button
                   type="submit"
                   disabled={isLoading}

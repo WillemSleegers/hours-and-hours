@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Header } from "@/components/header";
 import { useUserSettings } from "@/lib/hooks/use-user-settings";
@@ -50,8 +50,8 @@ export default function SettingsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              <Label htmlFor="theme">Theme</Label>
+            <Field>
+              <FieldLabel htmlFor="theme">Theme</FieldLabel>
               <Select
                 value={theme}
                 onValueChange={setTheme}
@@ -65,7 +65,7 @@ export default function SettingsPage() {
                   <SelectItem value="system">System</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
+            </Field>
           </CardContent>
         </Card>
 
@@ -76,10 +76,10 @@ export default function SettingsPage() {
               Configure how you want to track your time
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="dayStart">Day Start</Label>
+          <CardContent>
+            <Field>
+              <FieldLabel>Working Hours</FieldLabel>
+              <div className="flex gap-2 items-center">
                 <Select
                   value={settings.day_start_hour.toString()}
                   onValueChange={(value) => updateSettings({ day_start_hour: parseInt(value) })}
@@ -95,10 +95,7 @@ export default function SettingsPage() {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="dayEnd">Day End</Label>
+                <span className="text-muted-foreground">to</span>
                 <Select
                   value={settings.day_end_hour.toString()}
                   onValueChange={(value) => updateSettings({ day_end_hour: parseInt(value) })}
@@ -115,7 +112,7 @@ export default function SettingsPage() {
                   </SelectContent>
                 </Select>
               </div>
-            </div>
+            </Field>
           </CardContent>
         </Card>
       </main>

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { AuthProvider } from "@/lib/contexts/auth-context";
+import { ProjectsProvider } from "@/lib/contexts/projects-context";
 import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
@@ -52,20 +54,24 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {children}
-          <Toaster
-            position="top-center"
-            duration={2000}
-            closeButton
-            richColors
-          />
-        </ThemeProvider>
+        <AuthProvider>
+          <ProjectsProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              {children}
+              <Toaster
+                position="top-center"
+                duration={2000}
+                closeButton
+                richColors
+              />
+            </ThemeProvider>
+          </ProjectsProvider>
+        </AuthProvider>
       </body>
     </html>
   );

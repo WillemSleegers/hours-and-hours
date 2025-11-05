@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field, FieldLabel } from "@/components/ui/field";
 import {
   Dialog,
   DialogContent,
@@ -27,15 +27,21 @@ const PRESET_COLORS = [
   "#ef4444", // red
   "#f97316", // orange
   "#f59e0b", // amber
+  "#eab308", // yellow
   "#84cc16", // lime
   "#22c55e", // green
+  "#10b981", // emerald
   "#14b8a6", // teal
   "#06b6d4", // cyan
+  "#0ea5e9", // sky
   "#3b82f6", // blue
   "#6366f1", // indigo
   "#8b5cf6", // violet
   "#a855f7", // purple
+  "#d946ef", // fuchsia
   "#ec4899", // pink
+  "#f43f5e", // rose
+  "#64748b", // slate
 ];
 
 export function ProjectForm({
@@ -80,15 +86,15 @@ export function ProjectForm({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Project Name</Label>
+          <div className="grid gap-4 py-4">
+            <Field>
+              <FieldLabel htmlFor="name">Project Name</FieldLabel>
               <Input
                 id="name"
                 value={name}
@@ -96,9 +102,9 @@ export function ProjectForm({
                 placeholder="e.g., Client Work, Personal Project"
                 autoFocus
               />
-            </div>
-            <div className="space-y-3">
-              <Label>Color</Label>
+            </Field>
+            <Field>
+              <FieldLabel>Color</FieldLabel>
               <div className="grid grid-cols-6 gap-2">
                 {PRESET_COLORS.map((presetColor) => (
                   <button
@@ -115,7 +121,7 @@ export function ProjectForm({
                   />
                 ))}
               </div>
-            </div>
+            </Field>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>

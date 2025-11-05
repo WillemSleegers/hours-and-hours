@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Edit, Trash2, Archive, ArchiveRestore } from "lucide-react";
+import { Plus, Edit, Trash2, Archive, ArchiveRestore, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Header } from "@/components/header";
 import { ProjectForm } from "@/components/project-form";
 import { useProjects } from "@/lib/hooks/use-projects";
@@ -56,17 +63,8 @@ export default function ProjectsPage() {
   // Sort projects alphabetically
   const sortedProjects = [...projects].sort((a, b) => a.name.localeCompare(b.name));
 
-  // Show loading while checking auth
-  if (authLoading) {
-    return (
-      <div className="h-dvh flex items-center justify-center bg-background">
-        <div className="text-muted-foreground">Loading...</div>
-      </div>
-    );
-  }
-
   // Don't render if not authenticated (will redirect)
-  if (!user) {
+  if (authLoading || !user) {
     return null;
   }
 
@@ -100,7 +98,7 @@ export default function ProjectsPage() {
                           className="w-3 h-3 rounded-full p-0"
                           style={{ backgroundColor: project.color }}
                         />
-                        <span className="font-semibold text-lg">
+                        <span className="font-semibold text-base">
                           {project.name}
                           {project.archived && (
                             <span className="ml-2 text-xs text-muted-foreground font-normal">
@@ -109,41 +107,44 @@ export default function ProjectsPage() {
                           )}
                         </span>
                       </div>
-                      <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => toggleArchive(project.id)}
-                          title={project.archived ? "Unarchive project" : "Archive project"}
-                        >
-                          {project.archived ? (
-                            <ArchiveRestore className="h-3.5 w-3.5" />
-                          ) : (
-                            <Archive className="h-3.5 w-3.5" />
-                          )}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => setEditingProject({
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setEditingProject({
                             id: project.id,
                             name: project.name,
                             color: project.color,
-                          })}
-                        >
-                          <Edit className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => setDeletingProject({ id: project.id, name: project.name })}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
+                          })}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => toggleArchive(project.id)}>
+                            {project.archived ? (
+                              <>
+                                <ArchiveRestore className="mr-2 h-4 w-4" />
+                                Unarchive
+                              </>
+                            ) : (
+                              <>
+                                <Archive className="mr-2 h-4 w-4" />
+                                Archive
+                              </>
+                            )}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => setDeletingProject({ id: project.id, name: project.name })}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 ))}
