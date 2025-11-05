@@ -2,7 +2,14 @@
 
 import { useRouter } from "next/navigation"
 import { format } from "date-fns"
-import { BarChart3, Folder, Settings, LogOut, Menu, ChevronLeft } from "lucide-react"
+import {
+  BarChart3,
+  Folder,
+  Settings,
+  LogOut,
+  Menu,
+  ChevronLeft,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -23,7 +30,12 @@ interface HeaderProps {
   showBack?: boolean
 }
 
-export function Header({ totalHours, currentDate, title, showBack = false }: HeaderProps) {
+export function Header({
+  totalHours,
+  currentDate,
+  title,
+  showBack = false,
+}: HeaderProps) {
   const { user } = useAuth()
   const router = useRouter()
 
@@ -40,13 +52,10 @@ export function Header({ totalHours, currentDate, title, showBack = false }: Hea
 
   return (
     <header className="sticky top-0 z-50 bg-transparent p-3">
-      <div className="bg-card border border-border rounded-2xl px-3 py-2 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-        <div className="flex justify-start">
+      <div className="flex items-center gap-2 bg-card border border-border rounded-2xl px-3 py-2">
+        <div className="flex justify-start flex-1">
           {showBack ? (
-            <Button
-              variant="ghost"
-              onClick={() => router.push("/")}
-            >
+            <Button variant="ghost" onClick={() => router.push("/")}>
               Back
             </Button>
           ) : totalHours !== undefined && currentDate ? (
@@ -66,7 +75,7 @@ export function Header({ totalHours, currentDate, title, showBack = false }: Hea
             </Button>
           ) : null}
         </div>
-        <div className="text-center">
+        <div className="text-center shrink-0">
           {title ? (
             <h1 className="text-base font-semibold">{title}</h1>
           ) : currentDate ? (
@@ -75,7 +84,7 @@ export function Header({ totalHours, currentDate, title, showBack = false }: Hea
             </div>
           ) : null}
         </div>
-        <div className="flex justify-end">
+        <div className="flex justify-end flex-1">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8">
