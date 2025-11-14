@@ -45,7 +45,6 @@ export function TimeGrid({
 }: TimeGridProps) {
   const [selectedSlotTime, setSelectedSlotTime] = useState<number | null>(null)
   const [localNotes, setLocalNotes] = useState<Record<string, string>>({})
-  const debounceTimers = useRef<Record<string, NodeJS.Timeout>>({})
   const [confirmReplaceSlot, setConfirmReplaceSlot] = useState<{slot: TimeSlot, newProjectId: string} | null>(null)
   const pointerDownPos = useRef<{ x: number; y: number } | null>(null)
 
@@ -60,26 +59,10 @@ export function TimeGrid({
     setLocalNotes(newLocalNotes)
   }, [slots])
 
-  // Debounced note update
-  const debouncedNoteUpdate = (slotId: string, note: string) => {
-    // Clear existing timer for this slot
-    if (debounceTimers.current[slotId]) {
-      clearTimeout(debounceTimers.current[slotId])
-    }
-
-    // Set new timer
-    debounceTimers.current[slotId] = setTimeout(() => {
-      onNoteUpdate(slotId, note)
-      delete debounceTimers.current[slotId]
-    }, 500) // 500ms debounce delay
+  // Save note when input loses focus
+  const handleNoteSave = (slotId: string, note: string) => {
+    onNoteUpdate(slotId, note)
   }
-
-  // Cleanup timers on unmount
-  useEffect(() => {
-    return () => {
-      Object.values(debounceTimers.current).forEach(timer => clearTimeout(timer))
-    }
-  }, [])
 
   // Always display 15-minute slots for visual precision
   const displayIncrementInHours = 0.25 // 15 minutes
@@ -366,8 +349,10 @@ export function TimeGrid({
                           const newNote = e.target.value
                           // Update local state immediately for responsive UI
                           setLocalNotes(prev => ({ ...prev, [slot.id]: newNote }))
-                          // Debounce the actual update
-                          debouncedNoteUpdate(slot.id, newNote)
+                        }}
+                        onBlur={(e) => {
+                          // Save note when input loses focus
+                          handleNoteSave(slot.id, e.target.value)
                         }}
                         onKeyDown={(e) => {
                           if (e.key === "Enter") {

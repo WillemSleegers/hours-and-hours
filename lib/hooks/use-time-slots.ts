@@ -184,8 +184,8 @@ export function useTimeSlots(date: Date) {
   const updateNote = async (slotId: string, note: string) => {
     const oldSlots = [...allSlots];
 
-    // Convert empty string to null
-    const noteValue = note.trim() === "" ? null : note.trim();
+    // Convert empty/whitespace-only string to null, otherwise preserve the note as-is
+    const noteValue = note.trim() === "" ? null : note;
 
     // Optimistic update
     setAllSlots((prev) =>
