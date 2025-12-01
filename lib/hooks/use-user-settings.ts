@@ -19,6 +19,18 @@ export function useUserSettings() {
   useEffect(() => {
     const loadSettings = async () => {
       try {
+        // Check if user is authenticated first
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          // User not authenticated - silently use default settings
+          setSettings({
+            ...DEFAULT_SETTINGS,
+            id: "guest",
+          } as UserSettings);
+          setIsLoading(false);
+          return;
+        }
+
         const { data, error } = await supabase
           .from("user_settings")
           .select("*")
@@ -28,10 +40,6 @@ export function useUserSettings() {
         if (error) {
           // If no settings exist, create default
           if (error.code === "PGRST116") {
-            // Get current user
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) throw new Error("User not authenticated");
-
             const { data: newSettings, error: insertError } = await supabase
               .from("user_settings")
               .insert({ ...DEFAULT_SETTINGS, user_id: user.id })

@@ -44,7 +44,8 @@ export function Footer({
   // Filter to show only non-archived projects
   const activeProjects = projects.filter((p) => !p.archived)
   return (
-    <footer className="sticky bottom-0 z-50 bg-transparent p-3">
+    // Safari 26 rendering fix: bg-background (not bg-transparent) is required for Safari to properly render sticky positioned elements
+    <footer className="sticky bottom-0 z-50 bg-background p-3">
       <div className="bg-card border border-border rounded-2xl px-3 py-2 flex flex-wrap items-center gap-3">
         {/* Date navigation */}
         <div className="flex items-center gap-2">

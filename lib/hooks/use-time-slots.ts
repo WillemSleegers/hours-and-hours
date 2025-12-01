@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { TimeSlot } from "@/lib/types";
 import { toast } from "sonner";
+import { format } from "date-fns";
 
 export function useTimeSlots(date: Date) {
   const [allSlots, setAllSlots] = useState<TimeSlot[]>([]);
 
-  const dateString = date.toISOString().split("T")[0];
+  const dateString = format(date, "yyyy-MM-dd");
 
   // Fetch all slots once
   useEffect(() => {
