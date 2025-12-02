@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { format } from "date-fns"
-import { Calendar as CalendarIcon, X } from "lucide-react"
+import { Calendar as CalendarIcon, X, Download, FileJson } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -20,6 +20,8 @@ import { useProjects } from "@/lib/hooks/use-projects"
 import { useAuth } from "@/lib/hooks/use-auth"
 import { useUserSettings } from "@/lib/hooks/use-user-settings"
 import { supabase } from "@/lib/supabase"
+import { exportToCSV, exportToJSON } from "@/lib/export"
+import { toast } from "sonner"
 
 interface ProjectStats {
   projectId: string
@@ -32,7 +34,7 @@ export default function StatisticsPage() {
   const { projects } = useProjects()
   const { settings, updateSettings } = useUserSettings()
   const [allSlots, setAllSlots] = useState<
-    Array<{ project_id: string; date: string }>
+    Array<{ project_id: string; date: string; time_slot: number; note?: string | null }>
   >([])
   const [isLoading, setIsLoading] = useState(true)
   const [startDate, setStartDate] = useState<Date | undefined>(undefined)
@@ -40,6 +42,7 @@ export default function StatisticsPage() {
   const [earliestDate, setEarliestDate] = useState<Date | null>(null)
   const [latestDate, setLatestDate] = useState<Date | null>(null)
   const [showArchived, setShowArchived] = useState(false)
+  const [detailedExport, setDetailedExport] = useState(false)
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -66,12 +69,12 @@ export default function StatisticsPage() {
     try {
       const { data, error } = await supabase
         .from("time_slots")
-        .select("project_id, date")
+        .select("project_id, date, time_slot, note")
         .order("date")
 
       if (error) throw error
 
-      const slots = data as Array<{ project_id: string; date: string }>
+      const slots = data as Array<{ project_id: string; date: string; time_slot: number; note?: string | null }>
       setAllSlots(slots)
 
       // Find earliest and latest dates
@@ -153,6 +156,68 @@ export default function StatisticsPage() {
     setStartDate(undefined)
     setEndDate(undefined)
     updateSettings({ stats_start_date: null, stats_end_date: null })
+  }
+
+  const handleExportCSV = () => {
+    try {
+      const filteredSlots = allSlots.filter((slot) => {
+        if (startDate) {
+          const startDateString = format(startDate, "yyyy-MM-dd")
+          if (slot.date < startDateString) return false
+        }
+        if (endDate) {
+          const endDateString = format(endDate, "yyyy-MM-dd")
+          if (slot.date > endDateString) return false
+        }
+        return true
+      })
+
+      const exportSlots = filteredSlots.map((slot) => {
+        const project = projects.find((p) => p.id === slot.project_id)
+        return {
+          ...slot,
+          projectName: project?.name,
+          projectColor: project?.color,
+        }
+      })
+
+      exportToCSV(exportSlots, detailedExport)
+      toast.success(detailedExport ? "Exported detailed CSV" : "Exported summary CSV")
+    } catch (error) {
+      console.error("Error exporting to CSV:", error)
+      toast.error("Failed to export to CSV")
+    }
+  }
+
+  const handleExportJSON = () => {
+    try {
+      const filteredSlots = allSlots.filter((slot) => {
+        if (startDate) {
+          const startDateString = format(startDate, "yyyy-MM-dd")
+          if (slot.date < startDateString) return false
+        }
+        if (endDate) {
+          const endDateString = format(endDate, "yyyy-MM-dd")
+          if (slot.date > endDateString) return false
+        }
+        return true
+      })
+
+      const exportSlots = filteredSlots.map((slot) => {
+        const project = projects.find((p) => p.id === slot.project_id)
+        return {
+          ...slot,
+          projectName: project?.name,
+          projectColor: project?.color,
+        }
+      })
+
+      exportToJSON(exportSlots)
+      toast.success("Exported to JSON")
+    } catch (error) {
+      console.error("Error exporting to JSON:", error)
+      toast.error("Failed to export to JSON")
+    }
   }
 
   const getProject = (projectId: string) => {
@@ -340,6 +405,45 @@ export default function StatisticsPage() {
                 >
                   Include archived projects
                 </FieldLabel>
+              </div>
+            </Field>
+
+            <Field>
+              <div className="flex items-center gap-2 mb-3">
+                <Switch
+                  id="detailed-export"
+                  checked={detailedExport}
+                  onCheckedChange={setDetailedExport}
+                />
+                <FieldLabel
+                  htmlFor="detailed-export"
+                  className="cursor-pointer"
+                >
+                  Detailed export (with time slots)
+                </FieldLabel>
+              </div>
+              <FieldLabel>Export Data</FieldLabel>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 flex-1"
+                  onClick={handleExportCSV}
+                  disabled={allSlots.length === 0}
+                >
+                  <Download className="h-4 w-4" />
+                  Export CSV
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 flex-1"
+                  onClick={handleExportJSON}
+                  disabled={allSlots.length === 0}
+                >
+                  <FileJson className="h-4 w-4" />
+                  Export JSON
+                </Button>
               </div>
             </Field>
           </CardContent>
