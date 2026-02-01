@@ -117,11 +117,11 @@ export function Footer({
                   activeProjectId
                     ? {
                         backgroundColor:
-                          projects.find((p) => p.id === activeProjectId)?.color ||
-                          undefined,
+                          projects.find((p) => p.id === activeProjectId)
+                            ?.color || undefined,
                         borderColor:
-                          projects.find((p) => p.id === activeProjectId)?.color ||
-                          undefined,
+                          projects.find((p) => p.id === activeProjectId)
+                            ?.color || undefined,
                       }
                     : undefined
                 }

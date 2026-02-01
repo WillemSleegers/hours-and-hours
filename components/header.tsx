@@ -2,13 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { format } from "date-fns"
-import {
-  BarChart3,
-  Folder,
-  Settings,
-  LogOut,
-  Menu,
-} from "lucide-react"
+import { BarChart3, Folder, Settings, LogOut, Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -50,11 +44,8 @@ export function Header({
   }
 
   return (
-    // Safari rendering fix: width: 100% and explicit positioning are required
-    // for Safari to properly render sticky headers. The bg-background prevents
-    // transparency issues that cause the header to be invisible
     <header className="sticky top-0 z-50 w-full bg-background p-3">
-      <div className="flex items-center gap-2 bg-card border border-border rounded-2xl px-3 py-2 min-h-11">
+      <nav className="flex items-center gap-2 bg-card border border-border rounded-2xl px-3 py-2 min-h-11">
         <div className="flex justify-start flex-1">
           {showBack ? (
             <Button variant="ghost" onClick={() => router.push("/")}>
@@ -123,7 +114,7 @@ export function Header({
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-      </div>
+      </nav>
     </header>
   )
 }
