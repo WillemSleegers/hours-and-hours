@@ -67,7 +67,7 @@ export function Footer({
                 <CalendarDays className="h-5 w-5" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 m-3 mb-[18px]" align="center">
+            <PopoverContent className="w-auto p-0 m-3 mb-4.5" align="center">
               <Calendar
                 mode="single"
                 selected={currentDate}
