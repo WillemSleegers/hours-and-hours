@@ -8,7 +8,6 @@ import {
   Settings,
   LogOut,
   Menu,
-  ChevronLeft,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -51,9 +50,10 @@ export function Header({
   }
 
   return (
-    // Safari 26 rendering fix: left-0 right-0 and bg-background (not bg-transparent) are required
-    // for Safari to properly render sticky positioned headers
-    <header className="sticky top-0 left-0 right-0 z-50 bg-background p-3">
+    // Safari rendering fix: width: 100% and explicit positioning are required
+    // for Safari to properly render sticky headers. The bg-background prevents
+    // transparency issues that cause the header to be invisible
+    <header className="sticky top-0 z-50 w-full bg-background p-3">
       <div className="flex items-center gap-2 bg-card border border-border rounded-2xl px-3 py-2 min-h-11">
         <div className="flex justify-start flex-1">
           {showBack ? (
