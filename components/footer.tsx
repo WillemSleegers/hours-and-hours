@@ -60,7 +60,7 @@ export function Footer({
           <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
             <PopoverTrigger asChild>
               <Button
-                variant="ghost"
+                variant="outline"
                 size="icon"
                 className="hover:bg-accent/50 h-10 w-10"
               >

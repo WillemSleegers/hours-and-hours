@@ -53,11 +53,11 @@ export function Header({
             </Button>
           ) : totalHours !== undefined && currentDate ? (
             <Button
-              variant="ghost"
+              variant="outline"
               onClick={() =>
                 router.push(`/day?date=${format(currentDate, "yyyy-MM-dd")}`)
               }
-              className="h-auto px-3 py-1.5 hover:bg-accent flex items-end gap-1.5"
+              className="h-auto px-3 py-1.5 flex items-end gap-1.5"
             >
               <span className="text-xl font-bold tabular-nums leading-none">
                 {totalHours.toFixed(1)}

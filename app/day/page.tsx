@@ -90,9 +90,6 @@ function DayStatsContent() {
     setCurrentDate(new Date());
   };
 
-  const isToday =
-    format(currentDate, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
-
   // Show loading while checking auth
   if (authLoading) {
     return (
@@ -108,56 +105,10 @@ function DayStatsContent() {
   }
 
   return (
-    <div className="bg-background max-w-xl mx-auto min-h-screen">
+    <div className="bg-background max-w-xl mx-auto min-h-screen flex flex-col">
       <Header title="Daily Breakdown" showBack />
 
-      <main className="px-3 pb-3">
-        {/* Date Navigation */}
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handlePreviousDay}
-              className="h-9 w-9"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="gap-2">
-                  <CalendarIcon className="h-4 w-4" />
-                  {format(currentDate, "EEE, MMM d, yyyy")}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={currentDate}
-                  onSelect={(date) => date && setCurrentDate(date)}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handleNextDay}
-              className="h-9 w-9"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {!isToday && (
-            <Button variant="outline" onClick={handleToday}>
-              Today
-            </Button>
-          )}
-        </div>
-
+      <main className="px-3 pb-3 flex-1">
         {/* Total Hours Card */}
         <Card className="mb-4">
           <CardContent>
@@ -175,14 +126,7 @@ function DayStatsContent() {
 
         {/* Projects Breakdown */}
         <div className="space-y-3">
-          {stats.length === 0 ? (
-            <Card>
-              <CardContent className="text-center text-muted-foreground text-sm py-8">
-                No time tracked for this day
-              </CardContent>
-            </Card>
-          ) : (
-            stats.map((stat) => {
+          {stats.map((stat) => {
               const project = getProject(stat.projectId);
 
               return (
@@ -208,10 +152,58 @@ function DayStatsContent() {
                   </CardContent>
                 </Card>
               );
-            })
-          )}
+            })}
         </div>
       </main>
+
+      {/* Bottom Date Navigation */}
+      <footer className="sticky bottom-0 z-50 bg-background p-3">
+        <div className="bg-card border border-border rounded-2xl px-3 py-2 flex items-center justify-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handlePreviousDay}
+            className="h-10 w-10 hover:bg-accent/50"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="h-10 gap-2">
+                <CalendarIcon className="h-4 w-4" />
+                {format(currentDate, "EEE, MMM d, yyyy")}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0 m-3 mb-4.5" align="center">
+              <Calendar
+                mode="single"
+                selected={currentDate}
+                onSelect={(date) => date && setCurrentDate(date)}
+                initialFocus
+              />
+              <div className="p-3 border-t">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleToday}
+                >
+                  Today
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleNextDay}
+            className="h-10 w-10 hover:bg-accent/50"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </Button>
+        </div>
+      </footer>
     </div>
   );
 }
