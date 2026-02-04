@@ -70,10 +70,15 @@ export function useTimeSlots(date: Date) {
     });
 
     try {
+      // Get current user for RLS policy
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
       const { data, error } = await supabase
         .from("time_slots")
         .insert({
           project_id: projectId,
+          user_id: user.id,
           date: dateString,
           time_slot: timeSlot,
         })
@@ -121,8 +126,15 @@ export function useTimeSlots(date: Date) {
       // Rollback on error
       setSlots((prev) => prev.filter((s) => s.id !== tempId));
 
-      console.error("Error adding slot:", error);
-      toast.error(`Failed to add slot`);
+      // Better error logging for Supabase errors
+      const errorMessage = error instanceof Error
+        ? error.message
+        : typeof error === 'object' && error !== null
+          ? JSON.stringify(error, Object.getOwnPropertyNames(error))
+          : String(error);
+
+      console.error("Error adding slot:", errorMessage);
+      toast.error(`Failed to add slot: ${errorMessage}`);
       throw error;
     }
   };
@@ -147,6 +159,10 @@ export function useTimeSlots(date: Date) {
     );
 
     try {
+      // Get current user for RLS policy
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
       // Delete old slot and insert new one
       const { error: deleteError } = await supabase
         .from("time_slots")
@@ -159,6 +175,7 @@ export function useTimeSlots(date: Date) {
         .from("time_slots")
         .insert({
           project_id: newProjectId,
+          user_id: user.id,
           date: slotToReplace.date,
           time_slot: slotToReplace.time_slot,
         })
