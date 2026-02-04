@@ -27,7 +27,7 @@ export default function Home() {
   }, [authLoading, user, router])
 
   const { projects, isLoading: projectsLoading } = useProjects()
-  const { slots, toggleSlot, replaceSlot, deleteSlots, updateNote } =
+  const { slots, isLoading: slotsLoading, toggleSlot, replaceSlot, deleteSlots, updateNote } =
     useTimeSlots(currentDate)
   const {
     settings,
@@ -97,8 +97,8 @@ export default function Home() {
 
   const totalHours = slots.length * 0.25 // Each slot is 15 minutes (0.25 hours)
 
-  // Show loading state while data is being fetched
-  if (authLoading || projectsLoading || settingsLoading) {
+  // Show loading state only while checking auth
+  if (authLoading) {
     return (
       <div className="h-dvh flex items-center justify-center bg-background">
         <div className="text-muted-foreground">Loading...</div>
@@ -150,17 +150,19 @@ export default function Home() {
             </div>
           )}
 
-          <TimeGrid
-            slots={slots}
-            projects={projects}
-            onSlotToggle={toggleSlot}
-            onSlotReplace={replaceSlot}
-            onSlotDelete={handleSlotDelete}
-            onNoteUpdate={updateNote}
-            activeProjectId={activeProjectId}
-            dayStartHour={displayStartHour}
-            dayEndHour={displayEndHour}
-          />
+          <div className={slotsLoading ? "opacity-60 pointer-events-none" : ""}>
+            <TimeGrid
+              slots={slots}
+              projects={projects}
+              onSlotToggle={toggleSlot}
+              onSlotReplace={replaceSlot}
+              onSlotDelete={handleSlotDelete}
+              onNoteUpdate={updateNote}
+              activeProjectId={activeProjectId}
+              dayStartHour={displayStartHour}
+              dayEndHour={displayEndHour}
+            />
+          </div>
 
           {canShowLater && (
             <div className="flex justify-center">

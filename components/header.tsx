@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { format } from "date-fns"
-import { BarChart3, Folder, Settings, LogOut, Menu } from "lucide-react"
+import { Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -45,19 +45,19 @@ export function Header({
 
   return (
     <header className="sticky top-0 z-50 w-full bg-background p-3">
-      <nav className="flex items-center gap-2 bg-card border border-border rounded-2xl px-3 py-2 min-h-11">
+      <nav className="flex items-center gap-2 bg-card border border-border rounded-2xl px-3 py-2 h-12.5">
         <div className="flex justify-start flex-1">
           {showBack ? (
-            <Button variant="ghost" onClick={() => router.push("/")}>
+            <Button variant="ghost" onClick={() => router.push("/")} className="h-auto py-1.5">
               Back
             </Button>
           ) : totalHours !== undefined && currentDate ? (
             <Button
-              variant="outline"
+              variant="ghost"
               onClick={() =>
                 router.push(`/day?date=${format(currentDate, "yyyy-MM-dd")}`)
               }
-              className="h-auto px-3 py-1.5 flex items-end gap-1.5"
+              className="h-auto px-3 py-1.5 hover:bg-accent flex items-end gap-1.5"
             >
               <span className="text-xl font-bold tabular-nums leading-none">
                 {totalHours.toFixed(1)}
@@ -95,20 +95,16 @@ export function Header({
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => router.push("/statistics")}>
-                <BarChart3 className="mr-2 h-4 w-4" />
                 Statistics
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => router.push("/projects")}>
-                <Folder className="mr-2 h-4 w-4" />
                 Projects
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => router.push("/settings")}>
-                <Settings className="mr-2 h-4 w-4" />
                 Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleSignOut}>
-                <LogOut className="mr-2 h-4 w-4" />
                 Sign out
               </DropdownMenuItem>
             </DropdownMenuContent>

@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { format, addDays, subDays } from "date-fns";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -106,7 +106,7 @@ function DayStatsContent() {
 
   return (
     <div className="bg-background max-w-xl mx-auto min-h-screen flex flex-col">
-      <Header title="Daily Breakdown" showBack />
+      <Header currentDate={currentDate} showBack />
 
       <main className="px-3 pb-3 flex-1">
         {/* Total Hours Card */}
@@ -158,7 +158,7 @@ function DayStatsContent() {
 
       {/* Bottom Date Navigation */}
       <footer className="sticky bottom-0 z-50 bg-background p-3">
-        <div className="bg-card border border-border rounded-2xl px-3 py-2 flex items-center justify-center gap-2">
+        <div className="bg-card border border-border rounded-2xl px-3 py-2 flex items-center gap-2">
           <Button
             variant="outline"
             size="icon"
@@ -167,12 +167,14 @@ function DayStatsContent() {
           >
             <ChevronLeft className="h-5 w-5" />
           </Button>
-
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" className="h-10 gap-2">
-                <CalendarIcon className="h-4 w-4" />
-                {format(currentDate, "EEE, MMM d, yyyy")}
+              <Button
+                variant="outline"
+                size="icon"
+                className="hover:bg-accent/50 h-10 w-10"
+              >
+                <CalendarDays className="h-5 w-5" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0 m-3 mb-4.5" align="center">
@@ -193,7 +195,6 @@ function DayStatsContent() {
               </div>
             </PopoverContent>
           </Popover>
-
           <Button
             variant="outline"
             size="icon"

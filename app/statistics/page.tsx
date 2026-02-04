@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { format } from "date-fns"
-import { Calendar as CalendarIcon, X, Download, FileJson } from "lucide-react"
+import { CalendarDays, X, Download, FileJson } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -341,7 +341,7 @@ export default function StatisticsPage() {
                       size="sm"
                       className="gap-2 flex-1"
                     >
-                      <CalendarIcon className="h-4 w-4" />
+                      <CalendarDays className="h-4 w-4" />
                       {startDate
                         ? format(startDate, "MMM d")
                         : earliestDate
@@ -367,7 +367,7 @@ export default function StatisticsPage() {
                       size="sm"
                       className="gap-2 flex-1"
                     >
-                      <CalendarIcon className="h-4 w-4" />
+                      <CalendarDays className="h-4 w-4" />
                       {endDate
                         ? format(endDate, "MMM d")
                         : latestDate
