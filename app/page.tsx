@@ -27,8 +27,15 @@ export default function Home() {
   }, [authLoading, user, router])
 
   const { projects, isLoading: projectsLoading } = useProjects()
-  const { slots, isLoading: slotsLoading, toggleSlot, replaceSlot, deleteSlots, updateNote, fillRange } =
-    useTimeSlots(currentDate)
+  const {
+    slots,
+    isLoading: slotsLoading,
+    toggleSlot,
+    replaceSlot,
+    deleteSlots,
+    updateNote,
+    fillRange,
+  } = useTimeSlots(currentDate)
   const {
     settings,
     updateSettings,
@@ -45,7 +52,9 @@ export default function Home() {
     }
 
     const earliestSlot = Math.min(...slots.map((s) => Math.floor(s.time_slot)))
-    const latestSlot = Math.max(...slots.map((s) => Math.ceil(s.time_slot + 0.25)))
+    const latestSlot = Math.max(
+      ...slots.map((s) => Math.ceil(s.time_slot + 0.25)),
+    )
 
     return {
       start: Math.min(earliestSlot, settings.day_start_hour),
@@ -66,6 +75,7 @@ export default function Home() {
   // Check if we can show earlier/later hours
   const canShowEarlier = displayStartHour > 0
   const canShowLater = displayEndHour < 24
+
 
   const handlePreviousDay = () => {
     setCurrentDate((date) => subDays(date, 1))
@@ -133,7 +143,7 @@ export default function Home() {
       <Header totalHours={totalHours} currentDate={currentDate} />
 
       {/* Time grid */}
-      <main className="px-3 pb-3">
+      <main className="px-3">
         <div className="container mx-auto max-w-4xl">
           {canShowEarlier && (
             <div className="flex justify-center">

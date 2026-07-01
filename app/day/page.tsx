@@ -109,8 +109,9 @@ function DayStatsContent() {
       <Header currentDate={currentDate} showBack />
 
       <main className="px-3 pb-3 flex-1">
+        <div className="space-y-3">
         {/* Total Hours Card */}
-        <Card className="mb-4">
+        <Card>
           <CardContent>
             <div className="flex items-baseline gap-2 mb-2">
               <div className="text-5xl font-bold tabular-nums">{totalHours}</div>
@@ -125,7 +126,6 @@ function DayStatsContent() {
         </Card>
 
         {/* Projects Breakdown */}
-        <div className="space-y-3">
           {stats.map((stat) => {
               const project = getProject(stat.projectId);
 

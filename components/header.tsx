@@ -44,7 +44,7 @@ export function Header({
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-background p-3">
+    <header className="sticky top-0 z-50 w-full p-3">
       <nav className="flex items-center gap-2 bg-card border border-border rounded-2xl px-3 py-2 h-12.5">
         <div className="flex justify-start flex-1">
           {showBack ? (

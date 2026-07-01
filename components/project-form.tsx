@@ -1,9 +1,9 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Field, FieldLabel } from "@/components/ui/field";
+import { useState, useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Field, FieldLabel } from "@/components/ui/field"
 import {
   Dialog,
   DialogContent,
@@ -11,16 +11,16 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@/components/ui/dialog"
 
 interface ProjectFormProps {
-  open: boolean;
-  onClose: () => void;
-  onSubmit: (name: string, color: string) => Promise<void>;
-  initialName?: string;
-  initialColor?: string;
-  title: string;
-  description: string;
+  open: boolean
+  onClose: () => void
+  onSubmit: (name: string, color: string) => Promise<void>
+  initialName?: string
+  initialColor?: string
+  title: string
+  description: string
 }
 
 const PRESET_COLORS = [
@@ -42,7 +42,7 @@ const PRESET_COLORS = [
   "#ec4899", // pink
   "#f43f5e", // rose
   "#64748b", // slate
-];
+]
 
 export function ProjectForm({
   open,
@@ -53,40 +53,40 @@ export function ProjectForm({
   title,
   description,
 }: ProjectFormProps) {
-  const [name, setName] = useState(initialName);
-  const [color, setColor] = useState(initialColor);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [name, setName] = useState(initialName)
+  const [color, setColor] = useState(initialColor)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Sync state when initial values change (e.g., when editing different projects)
   useEffect(() => {
-    setName(initialName);
-    setColor(initialColor);
-  }, [initialName, initialColor]);
+    setName(initialName)
+    setColor(initialColor)
+  }, [initialName, initialColor])
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim()) return;
+    e.preventDefault()
+    if (!name.trim()) return
 
-    setIsSubmitting(true);
+    setIsSubmitting(true)
     try {
-      await onSubmit(name.trim(), color);
-      setName("");
-      setColor("#3b82f6");
-      onClose();
+      await onSubmit(name.trim(), color)
+      setName("")
+      setColor("#3b82f6")
+      onClose()
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   const handleClose = () => {
-    setName(initialName);
-    setColor(initialColor);
-    onClose();
-  };
+    setName(initialName)
+    setColor(initialColor)
+    onClose()
+  }
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-106.25">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
@@ -113,8 +113,12 @@ export function ProjectForm({
                     className="w-10 h-10 rounded-lg border-2 transition-all hover:scale-110"
                     style={{
                       backgroundColor: presetColor,
-                      borderColor: color === presetColor ? presetColor : "transparent",
-                      boxShadow: color === presetColor ? `0 0 0 2px white, 0 0 0 4px ${presetColor}` : "none",
+                      borderColor:
+                        color === presetColor ? presetColor : "transparent",
+                      boxShadow:
+                        color === presetColor
+                          ? `0 0 0 2px white, 0 0 0 4px ${presetColor}`
+                          : "none",
                     }}
                     onClick={() => setColor(presetColor)}
                     aria-label={`Select color ${presetColor}`}
@@ -134,5 +138,5 @@ export function ProjectForm({
         </form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

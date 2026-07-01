@@ -110,7 +110,7 @@ export default function ProjectsPage() {
           </Card>
         ) : (
           <Card className="py-0">
-            <CardContent>
+            <CardContent className="p-0">
               <div className="divide-y divide-border/50">
                 {sortedProjects.map((project) => (
                   <div
@@ -196,10 +196,10 @@ export default function ProjectsPage() {
         )}
 
         {/* Add Project Button */}
-        <div className="mt-4">
+        <div className="mt-3">
           <Button
             onClick={() => setShowAddProject(true)}
-            className="w-full gap-2 h-12 text-base"
+            className="w-full gap-2 h-12 text-base rounded-xl"
             variant="outline"
           >
             <Plus className="h-5 w-5" />

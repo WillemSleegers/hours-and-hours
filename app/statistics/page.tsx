@@ -409,7 +409,7 @@ export default function StatisticsPage() {
             </Field>
 
             <Field>
-              <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-2">
                 <Switch
                   id="detailed-export"
                   checked={detailedExport}

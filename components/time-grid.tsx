@@ -463,7 +463,7 @@ export function TimeGrid({
       })}
 
       {/* Final time marker */}
-      <div className="col-start-1 flex items-start justify-end pr-2">
+      <div className="col-start-1 flex items-start justify-end pr-1">
         <span className="text-xs font-medium text-muted-foreground/70 -translate-y-1/2">
           {formatTime(dayEndHour)}
         </span>
