@@ -25,55 +25,12 @@ An intuitive time tracking app focused on simplicity and ease of use.
 - **Type Safety**: TypeScript
 - **Date Handling**: date-fns
 
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+ installed
-- A Supabase account and project
-
-### Installation
-
-1. Clone the repository:
-```bash
-git clone <your-repo-url>
-cd hours-and-hours
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Set up Supabase:
-   - Create a new project at [supabase.com](https://supabase.com)
-   - Run the migrations from `supabase/migrations/` in order in your Supabase SQL editor
-   - Set up Row Level Security (RLS) policies to ensure users can only access their own data
-   - Copy your project URL and anon key
-
-4. Configure environment variables:
-```bash
-cp .env.local.example .env.local
-```
-
-Edit `.env.local` and add your Supabase credentials:
-```
-NEXT_PUBLIC_SUPABASE_URL=your-project-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-```
-
-5. Run the development server:
-```bash
-npm run dev
-```
-
-6. Open [http://localhost:3000](http://localhost:3000) in your browser
-
 ## Database Schema
 
 The app uses three main tables:
 
 ### Projects
+
 - `id`: UUID (primary key)
 - `user_id`: UUID (foreign key to auth.users)
 - `name`: Text (project name)
@@ -82,6 +39,7 @@ The app uses three main tables:
 - `created_at`, `updated_at`: Timestamps
 
 ### Time Slots
+
 - `id`: UUID (primary key)
 - `user_id`: UUID (foreign key to auth.users)
 - `project_id`: UUID (foreign key to projects)
@@ -93,6 +51,7 @@ The app uses three main tables:
 **Note**: The app uses 15-minute slots as the atomic unit. Consecutive slots for the same project are visually grouped into entries in the UI, but stored as individual 15-minute slots in the database.
 
 ### User Settings
+
 - `id`: UUID (primary key, matches auth.users.id)
 - `day_start_hour`: Integer (0-23, when your day starts)
 - `day_end_hour`: Integer (1-24, when your day ends)
@@ -111,6 +70,7 @@ The interface is designed around a simple tap-based interaction model optimized 
 3. **Tap again on the same slot** to remove it (toggle behavior)
 
 **Why it works this way:**
+
 - **Toggle behavior** makes it fast and easy to add/remove slots without needing separate delete actions
 - **Tap instead of drag** is more reliable on touch screens and prevents accidental selections
 - **15-minute increments** provide precision while keeping the interface clean
@@ -123,6 +83,7 @@ The interface is designed around a simple tap-based interaction model optimized 
 4. **Tap the slot again** to collapse the section when done
 
 **Why it works this way:**
+
 - **Requires two taps** (first to add slot, second to open actions) prevents the expandable section from opening every time you're quickly adding multiple slots
 - **Expandable section** keeps the interface clean and uncluttered when you're just adding slots
 - **Large buttons** in the expanded area are easy to tap on touch screens
@@ -134,6 +95,7 @@ The interface is designed around a simple tap-based interaction model optimized 
 3. The section collapses automatically after deletion
 
 **Why it works this way:**
+
 - **Actions are hidden until needed** to maintain a clean visual timeline
 - **Smooth 200ms animation** provides visual feedback without feeling jarring
 - **Separate expansion area** with distinct background color clearly shows which slot you're editing

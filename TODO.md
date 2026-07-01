@@ -73,9 +73,3 @@
 - [ ] **Timer Mode** - Start/stop timer instead of manual entry (optional alternative mode)
 - [ ] **Tags/Categories** - Tag entries for more granular filtering (e.g., "meeting", "coding", "planning")
 - [ ] **Project Archiving** - Hide completed projects without deleting history
-
-## Bugs
-
-- [ ] The login screen shows an error about failing to load something
-- [ ] The footer and header don't stay in their position while scrolling. The header disappears when scrolling down and re-appears scrolling up. The footer moves up a bit when scrolling down and moves all the way to the bottom when scrolling up. Importantly, this isn't a problem when first loading the app, but it becomes a problem after the note dialog window has been opened.
-- [ ] The dialog window affects your position in the time grid. When you add a note to an early time slot (such as 9 AM), the dialog window moves the time grid up, likely as a result of the keyboard sliding in, but when you then close the window, you stay in the same position rather than being positioned on the slot you added a note to.
