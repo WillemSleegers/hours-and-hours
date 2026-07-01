@@ -77,7 +77,6 @@ export function Footer({
                     setDatePickerOpen(false)
                   }
                 }}
-                initialFocus
               />
               <div className="p-3 border-t">
                 <Button

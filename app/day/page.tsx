@@ -182,7 +182,6 @@ function DayStatsContent() {
                 mode="single"
                 selected={currentDate}
                 onSelect={(date) => date && setCurrentDate(date)}
-                initialFocus
               />
               <div className="p-3 border-t">
                 <Button

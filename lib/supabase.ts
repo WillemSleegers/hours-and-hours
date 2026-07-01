@@ -17,6 +17,7 @@ interface Database {
       projects: {
         Row: {
           id: string
+          user_id: string
           name: string
           color: string
           archived: boolean
@@ -25,6 +26,7 @@ interface Database {
         }
         Insert: {
           id?: string
+          user_id: string
           name: string
           color: string
           archived?: boolean
@@ -33,6 +35,7 @@ interface Database {
         }
         Update: {
           id?: string
+          user_id?: string
           name?: string
           color?: string
           archived?: boolean
@@ -44,6 +47,7 @@ interface Database {
       time_slots: {
         Row: {
           id: string
+          user_id: string
           project_id: string
           date: string
           time_slot: number
@@ -53,6 +57,7 @@ interface Database {
         }
         Insert: {
           id?: string
+          user_id: string
           project_id: string
           date: string
           time_slot: number
@@ -62,6 +67,7 @@ interface Database {
         }
         Update: {
           id?: string
+          user_id?: string
           project_id?: string
           date?: string
           time_slot?: number
@@ -81,6 +87,7 @@ interface Database {
       user_settings: {
         Row: {
           id: string
+          user_id: string
           day_start_hour: number
           day_end_hour: number
           stats_start_date: string | null
@@ -90,6 +97,7 @@ interface Database {
         }
         Insert: {
           id?: string
+          user_id: string
           day_start_hour?: number
           day_end_hour?: number
           stats_start_date?: string | null
@@ -99,6 +107,7 @@ interface Database {
         }
         Update: {
           id?: string
+          user_id?: string
           day_start_hour?: number
           day_end_hour?: number
           stats_start_date?: string | null
