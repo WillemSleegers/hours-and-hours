@@ -1,5 +1,8 @@
 {
   "permissions": {
-    "allow": ["Bash(npx npm-check-updates *)"]
+    "allow": [
+      "Bash(npx npm-check-updates *)",
+      "Bash(npx fallow *)"
+    ]
   }
 }
