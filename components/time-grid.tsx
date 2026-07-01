@@ -220,7 +220,7 @@ export function TimeGrid({
             </div>
 
             {/* Time slot */}
-            <div className="relative border-t border-border/30">
+            <div className="relative border-t border-border/30 min-w-0">
               {/* Slot content - clickable bar */}
               <div
                 className={cn(
