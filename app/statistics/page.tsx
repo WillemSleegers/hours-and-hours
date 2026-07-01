@@ -21,12 +21,9 @@ import { useAuth } from "@/lib/hooks/use-auth"
 import { useUserSettings } from "@/lib/hooks/use-user-settings"
 import { supabase } from "@/lib/supabase"
 import { exportToCSV, exportToJSON } from "@/lib/export"
+import { computeProjectHours, hoursMapToStats } from "@/lib/stats"
+import { ProjectStats } from "@/lib/types"
 import { toast } from "sonner"
-
-interface ProjectStats {
-  projectId: string
-  totalHours: number
-}
 
 export default function StatisticsPage() {
   const router = useRouter()
@@ -90,45 +87,21 @@ export default function StatisticsPage() {
     }
   }
 
-  // Client-side filtering
-  const getFilteredStats = (): ProjectStats[] => {
-    // Filter slots by date range
-    const filteredSlots = allSlots.filter((slot) => {
-      if (startDate) {
-        const startDateString = format(startDate, "yyyy-MM-dd")
-        if (slot.date < startDateString) return false
-      }
-      if (endDate) {
-        const endDateString = format(endDate, "yyyy-MM-dd")
-        if (slot.date > endDateString) return false
-      }
+  const getFilteredSlots = () =>
+    allSlots.filter((slot) => {
+      if (startDate && slot.date < format(startDate, "yyyy-MM-dd")) return false
+      if (endDate && slot.date > format(endDate, "yyyy-MM-dd")) return false
       return true
     })
 
-    const statsMap = new Map<string, number>()
-
-    // Initialize all projects with 0 hours
-    projects.forEach((project) => {
-      statsMap.set(project.id, 0)
+  const getExportSlots = () =>
+    getFilteredSlots().map((slot) => {
+      const project = projects.find((p) => p.id === slot.project_id)
+      return { ...slot, projectName: project?.name, projectColor: project?.color }
     })
 
-    // Each slot is 15 minutes = 0.25 hours
-    filteredSlots.forEach((slot) => {
-      const currentHours = statsMap.get(slot.project_id) || 0
-      statsMap.set(slot.project_id, currentHours + 0.25)
-    })
-
-    const projectStats = Array.from(statsMap.entries()).map(
-      ([projectId, totalHours]) => ({
-        projectId,
-        totalHours,
-      })
-    )
-
-    projectStats.sort((a, b) => b.totalHours - a.totalHours)
-
-    return projectStats
-  }
+  const getFilteredStats = (): ProjectStats[] =>
+    hoursMapToStats(computeProjectHours(getFilteredSlots(), projects))
 
   const allStats = getFilteredStats()
 
@@ -160,28 +133,7 @@ export default function StatisticsPage() {
 
   const handleExportCSV = () => {
     try {
-      const filteredSlots = allSlots.filter((slot) => {
-        if (startDate) {
-          const startDateString = format(startDate, "yyyy-MM-dd")
-          if (slot.date < startDateString) return false
-        }
-        if (endDate) {
-          const endDateString = format(endDate, "yyyy-MM-dd")
-          if (slot.date > endDateString) return false
-        }
-        return true
-      })
-
-      const exportSlots = filteredSlots.map((slot) => {
-        const project = projects.find((p) => p.id === slot.project_id)
-        return {
-          ...slot,
-          projectName: project?.name,
-          projectColor: project?.color,
-        }
-      })
-
-      exportToCSV(exportSlots, detailedExport)
+      exportToCSV(getExportSlots(), detailedExport)
       toast.success(detailedExport ? "Exported detailed CSV" : "Exported summary CSV")
     } catch (error) {
       console.error("Error exporting to CSV:", error)
@@ -191,28 +143,7 @@ export default function StatisticsPage() {
 
   const handleExportJSON = () => {
     try {
-      const filteredSlots = allSlots.filter((slot) => {
-        if (startDate) {
-          const startDateString = format(startDate, "yyyy-MM-dd")
-          if (slot.date < startDateString) return false
-        }
-        if (endDate) {
-          const endDateString = format(endDate, "yyyy-MM-dd")
-          if (slot.date > endDateString) return false
-        }
-        return true
-      })
-
-      const exportSlots = filteredSlots.map((slot) => {
-        const project = projects.find((p) => p.id === slot.project_id)
-        return {
-          ...slot,
-          projectName: project?.name,
-          projectColor: project?.color,
-        }
-      })
-
-      exportToJSON(exportSlots)
+      exportToJSON(getExportSlots())
       toast.success("Exported to JSON")
     } catch (error) {
       console.error("Error exporting to JSON:", error)

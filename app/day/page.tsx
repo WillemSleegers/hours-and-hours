@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { format, addDays, subDays } from "date-fns";
+import { format } from "date-fns";
 import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,11 +13,9 @@ import { Header } from "@/components/header";
 import { useProjects } from "@/lib/hooks/use-projects";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { useTimeSlots } from "@/lib/hooks/use-time-slots";
-
-interface ProjectStats {
-  projectId: string;
-  totalHours: number;
-}
+import { useDateNavigation } from "@/lib/hooks/use-date-navigation";
+import { computeProjectHours, hoursMapToStats } from "@/lib/stats";
+import { ProjectStats } from "@/lib/types";
 
 function DayStatsContent() {
   const router = useRouter();
@@ -27,7 +25,7 @@ function DayStatsContent() {
 
   // Get date from query params or default to today
   const dateParam = searchParams.get("date");
-  const [currentDate, setCurrentDate] = useState<Date>(
+  const { currentDate, setCurrentDate, handlePreviousDay, handleNextDay, handleToday } = useDateNavigation(
     dateParam ? new Date(dateParam) : new Date()
   );
 
@@ -46,48 +44,16 @@ function DayStatsContent() {
     router.replace(`/day?date=${dateString}`);
   }, [currentDate, router]);
 
-  const getStats = (): ProjectStats[] => {
-    const statsMap = new Map<string, number>();
-
-    // Initialize all projects with 0 hours
-    projects.forEach((project) => {
-      statsMap.set(project.id, 0);
-    });
-
-    // Each slot is 15 minutes = 0.25 hours
-    slots.forEach((slot) => {
-      const currentHours = statsMap.get(slot.project_id) || 0;
-      statsMap.set(slot.project_id, currentHours + 0.25);
-    });
-
-    const projectStats = Array.from(statsMap.entries())
-      .map(([projectId, totalHours]) => ({
-        projectId,
-        totalHours,
-      }))
-      .filter((stat) => stat.totalHours > 0) // Only show projects with hours
-      .sort((a, b) => b.totalHours - a.totalHours);
-
-    return projectStats;
-  };
+  const getStats = (): ProjectStats[] =>
+    hoursMapToStats(computeProjectHours(slots, projects)).filter(
+      (stat) => stat.totalHours > 0
+    );
 
   const stats = getStats();
   const totalHours = stats.reduce((sum, stat) => sum + stat.totalHours, 0);
 
   const getProject = (projectId: string) => {
     return projects.find((p) => p.id === projectId);
-  };
-
-  const handlePreviousDay = () => {
-    setCurrentDate((date) => subDays(date, 1));
-  };
-
-  const handleNextDay = () => {
-    setCurrentDate((date) => addDays(date, 1));
-  };
-
-  const handleToday = () => {
-    setCurrentDate(new Date());
   };
 
   // Show loading while checking auth

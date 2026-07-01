@@ -160,12 +160,13 @@ export function TimeGrid({
     return project?.name || "Unknown"
   }
 
-  // Find the nearest same-project slot above with a clear gap (no other projects in between).
+  // Find the nearest same-project slot with a clear gap in the given direction.
   // Returns the time of that slot, or null if none exists.
-  const findGapAbove = (time: number, projectId: string): number | null => {
-    let checkTime = Math.round((time - 0.25) * 4) / 4
+  const findGap = (time: number, projectId: string, direction: "above" | "below"): number | null => {
+    const step = direction === "above" ? -0.25 : 0.25
+    let checkTime = Math.round((time + step) * 4) / 4
     let foundGap = false
-    while (checkTime >= dayStartHour) {
+    while (direction === "above" ? checkTime >= dayStartHour : checkTime < dayEndHour) {
       const checkSlot = getSlotForTime(checkTime)
       if (checkSlot) {
         if (checkSlot.project_id === projectId) {
@@ -176,27 +177,7 @@ export function TimeGrid({
       } else {
         foundGap = true
       }
-      checkTime = Math.round((checkTime - 0.25) * 4) / 4
-    }
-    return null
-  }
-
-  // Find the nearest same-project slot below with a clear gap.
-  const findGapBelow = (time: number, projectId: string): number | null => {
-    let checkTime = Math.round((time + 0.25) * 4) / 4
-    let foundGap = false
-    while (checkTime < dayEndHour) {
-      const checkSlot = getSlotForTime(checkTime)
-      if (checkSlot) {
-        if (checkSlot.project_id === projectId) {
-          return foundGap ? checkTime : null
-        } else {
-          return null
-        }
-      } else {
-        foundGap = true
-      }
-      checkTime = Math.round((checkTime + 0.25) * 4) / 4
+      checkTime = Math.round((checkTime + step) * 4) / 4
     }
     return null
   }
@@ -245,6 +226,19 @@ export function TimeGrid({
     }
   }, [activeProjectId])
 
+  const slotActionButtonProps = (projectId: string, onClick: (e: React.MouseEvent) => void) => ({
+    size: "sm" as const,
+    variant: "ghost" as const,
+    onPointerDown: (e: React.PointerEvent) => { e.stopPropagation(); pointerDownPos.current = null },
+    onPointerUp: (e: React.PointerEvent) => { e.stopPropagation(); pointerDownPos.current = null },
+    onClick: (e: React.MouseEvent) => { e.stopPropagation(); onClick(e) },
+    className: "h-6 w-6 p-0 rounded shrink-0",
+    style: {
+      backgroundColor: `${getProjectColor(projectId)}30`,
+      color: getProjectColor(projectId),
+    },
+  })
+
   return (
     <div className="select-none grid grid-cols-[auto_1fr] gap-x-2 py-2">
       {timeSlots.map((time) => {
@@ -252,8 +246,8 @@ export function TimeGrid({
         const isFirst = slot ? isFirstInGroup(time, slot) : false
         const isSelected = selectedSlotTime === time && slot !== undefined
         const showButtons = isSelected
-        const gapAbove = isSelected && slot ? findGapAbove(time, slot.project_id) : null
-        const gapBelow = isSelected && slot ? findGapBelow(time, slot.project_id) : null
+        const gapAbove = isSelected && slot ? findGap(time, slot.project_id, "above") : null
+        const gapBelow = isSelected && slot ? findGap(time, slot.project_id, "below") : null
 
         return (
           <Fragment key={time}>
@@ -318,66 +312,27 @@ export function TimeGrid({
                   <div className="flex items-center gap-1 ml-auto shrink-0">
                     {gapAbove !== null && (
                       <Button
-                        size="sm"
-                        variant="ghost"
-                        onPointerDown={(e) => { e.stopPropagation(); pointerDownPos.current = null }}
-                        onPointerUp={(e) => { e.stopPropagation(); pointerDownPos.current = null }}
-                        onClick={(e) => {
-                          e.stopPropagation()
+                        {...slotActionButtonProps(slot.project_id, () => {
                           onFillRange(slot.project_id, gapAbove + 0.25, time - 0.25)
                           setSelectedSlotTime(null)
-                        }}
-                        className="h-6 w-6 p-0 rounded shrink-0"
-                        style={{
-                          backgroundColor: `${getProjectColor(slot.project_id)}30`,
-                          color: getProjectColor(slot.project_id),
-                        }}
+                        })}
                       >
                         <ArrowUp className="h-3 w-3" />
                       </Button>
                     )}
                     {gapBelow !== null && (
                       <Button
-                        size="sm"
-                        variant="ghost"
-                        onPointerDown={(e) => { e.stopPropagation(); pointerDownPos.current = null }}
-                        onPointerUp={(e) => { e.stopPropagation(); pointerDownPos.current = null }}
-                        onClick={(e) => {
-                          e.stopPropagation()
+                        {...slotActionButtonProps(slot.project_id, () => {
                           onFillRange(slot.project_id, time + 0.25, gapBelow - 0.25)
                           setSelectedSlotTime(null)
-                        }}
-                        className="h-6 w-6 p-0 rounded shrink-0"
-                        style={{
-                          backgroundColor: `${getProjectColor(slot.project_id)}30`,
-                          color: getProjectColor(slot.project_id),
-                        }}
+                        })}
                       >
                         <ArrowDown className="h-3 w-3" />
                       </Button>
                     )}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onPointerDown={(e) => {
-                          e.stopPropagation()
-                          pointerDownPos.current = null
-                        }}
-                        onPointerUp={(e) => {
-                          e.stopPropagation()
-                          pointerDownPos.current = null
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                        }}
-                        className="h-6 w-6 p-0 rounded shrink-0"
-                        style={{
-                          backgroundColor: `${getProjectColor(slot.project_id)}30`,
-                          color: getProjectColor(slot.project_id),
-                        }}
-                      >
+                      <Button {...slotActionButtonProps(slot.project_id, () => {})}>
                         <Trash2 className="h-3 w-3" />
                       </Button>
                     </DropdownMenuTrigger>

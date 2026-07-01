@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { addDays, subDays } from "date-fns"
 import { Button } from "@/components/ui/button"
 import { TimeGrid } from "@/components/time-grid"
 import { Header } from "@/components/header"
@@ -11,12 +10,13 @@ import { useProjects } from "@/lib/hooks/use-projects"
 import { useTimeSlots } from "@/lib/hooks/use-time-slots"
 import { useUserSettings } from "@/lib/hooks/use-user-settings"
 import { useAuth } from "@/lib/hooks/use-auth"
+import { useDateNavigation } from "@/lib/hooks/use-date-navigation"
 import { ChevronUp, ChevronDown } from "lucide-react"
 
 export default function Home() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
-  const [currentDate, setCurrentDate] = useState(new Date())
+  const { currentDate, setCurrentDate, handlePreviousDay, handleNextDay, handleToday } = useDateNavigation()
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
 
   // Redirect to login if not authenticated
@@ -76,18 +76,6 @@ export default function Home() {
   const canShowEarlier = displayStartHour > 0
   const canShowLater = displayEndHour < 24
 
-
-  const handlePreviousDay = () => {
-    setCurrentDate((date) => subDays(date, 1))
-  }
-
-  const handleNextDay = () => {
-    setCurrentDate((date) => addDays(date, 1))
-  }
-
-  const handleToday = () => {
-    setCurrentDate(new Date())
-  }
 
   const handleDateSelect = (date: Date) => {
     setCurrentDate(date)

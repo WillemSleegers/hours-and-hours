@@ -17,6 +17,11 @@ export interface TimeSlot {
   updated_at?: string;
 }
 
+export interface ProjectStats {
+  projectId: string
+  totalHours: number
+}
+
 export interface UserSettings {
   id: string;
   day_start_hour: number;
