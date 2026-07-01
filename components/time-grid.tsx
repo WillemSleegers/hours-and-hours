@@ -18,7 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Trash2 } from "lucide-react"
+import { ArrowDown, ArrowUp, Trash2 } from "lucide-react"
 
 interface TimeGridProps {
   slots: TimeSlot[]
@@ -27,6 +27,7 @@ interface TimeGridProps {
   onSlotReplace: (slotId: string, newProjectId: string) => void
   onSlotDelete: (slotId: string) => void
   onNoteUpdate: (slotId: string, note: string) => void
+  onFillRange: (projectId: string, startTime: number, endTime: number) => void
   activeProjectId: string | null
   dayStartHour?: number
   dayEndHour?: number
@@ -39,6 +40,7 @@ export function TimeGrid({
   onSlotReplace,
   onSlotDelete,
   onNoteUpdate,
+  onFillRange,
   activeProjectId,
   dayStartHour = 0,
   dayEndHour = 24,
@@ -158,6 +160,47 @@ export function TimeGrid({
     return project?.name || "Unknown"
   }
 
+  // Find the nearest same-project slot above with a clear gap (no other projects in between).
+  // Returns the time of that slot, or null if none exists.
+  const findGapAbove = (time: number, projectId: string): number | null => {
+    let checkTime = Math.round((time - 0.25) * 4) / 4
+    let foundGap = false
+    while (checkTime >= dayStartHour) {
+      const checkSlot = getSlotForTime(checkTime)
+      if (checkSlot) {
+        if (checkSlot.project_id === projectId) {
+          return foundGap ? checkTime : null
+        } else {
+          return null
+        }
+      } else {
+        foundGap = true
+      }
+      checkTime = Math.round((checkTime - 0.25) * 4) / 4
+    }
+    return null
+  }
+
+  // Find the nearest same-project slot below with a clear gap.
+  const findGapBelow = (time: number, projectId: string): number | null => {
+    let checkTime = Math.round((time + 0.25) * 4) / 4
+    let foundGap = false
+    while (checkTime < dayEndHour) {
+      const checkSlot = getSlotForTime(checkTime)
+      if (checkSlot) {
+        if (checkSlot.project_id === projectId) {
+          return foundGap ? checkTime : null
+        } else {
+          return null
+        }
+      } else {
+        foundGap = true
+      }
+      checkTime = Math.round((checkTime + 0.25) * 4) / 4
+    }
+    return null
+  }
+
   // Delete all consecutive slots for the same project (delete entire entry)
   const handleDeleteEntry = (slot: TimeSlot) => {
     const projectId = slot.project_id
@@ -209,6 +252,8 @@ export function TimeGrid({
         const isFirst = slot ? isFirstInGroup(time, slot) : false
         const isSelected = selectedSlotTime === time && slot !== undefined
         const showButtons = isSelected
+        const gapAbove = isSelected && slot ? findGapAbove(time, slot.project_id) : null
+        const gapBelow = isSelected && slot ? findGapBelow(time, slot.project_id) : null
 
         return (
           <Fragment key={time}>
@@ -270,6 +315,47 @@ export function TimeGrid({
                   )}
                 </div>
                 {slot && isSelected && (
+                  <div className="flex items-center gap-1 ml-auto shrink-0">
+                    {gapAbove !== null && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onPointerDown={(e) => { e.stopPropagation(); pointerDownPos.current = null }}
+                        onPointerUp={(e) => { e.stopPropagation(); pointerDownPos.current = null }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onFillRange(slot.project_id, gapAbove + 0.25, time - 0.25)
+                          setSelectedSlotTime(null)
+                        }}
+                        className="h-6 w-6 p-0 rounded shrink-0"
+                        style={{
+                          backgroundColor: `${getProjectColor(slot.project_id)}30`,
+                          color: getProjectColor(slot.project_id),
+                        }}
+                      >
+                        <ArrowUp className="h-3 w-3" />
+                      </Button>
+                    )}
+                    {gapBelow !== null && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onPointerDown={(e) => { e.stopPropagation(); pointerDownPos.current = null }}
+                        onPointerUp={(e) => { e.stopPropagation(); pointerDownPos.current = null }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onFillRange(slot.project_id, time + 0.25, gapBelow - 0.25)
+                          setSelectedSlotTime(null)
+                        }}
+                        className="h-6 w-6 p-0 rounded shrink-0"
+                        style={{
+                          backgroundColor: `${getProjectColor(slot.project_id)}30`,
+                          color: getProjectColor(slot.project_id),
+                        }}
+                      >
+                        <ArrowDown className="h-3 w-3" />
+                      </Button>
+                    )}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
@@ -286,7 +372,7 @@ export function TimeGrid({
                         onClick={(e) => {
                           e.stopPropagation()
                         }}
-                        className="h-6 w-6 p-0 rounded shrink-0 ml-auto"
+                        className="h-6 w-6 p-0 rounded shrink-0"
                         style={{
                           backgroundColor: `${getProjectColor(slot.project_id)}30`,
                           color: getProjectColor(slot.project_id),
@@ -319,6 +405,7 @@ export function TimeGrid({
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
+                  </div>
                 )}
               </div>
 

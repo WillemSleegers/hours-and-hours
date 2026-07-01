@@ -261,6 +261,67 @@ export function useTimeSlots(date: Date) {
     }
   };
 
+  const fillRange = async (projectId: string, startTime: number, endTime: number) => {
+    const startQuarter = Math.round(startTime * 4);
+    const endQuarter = Math.round(endTime * 4);
+
+    const timesToFill: number[] = [];
+    for (let q = startQuarter; q <= endQuarter; q++) {
+      const time = q / 4;
+      if (!slots.find((s) => s.time_slot === time)) {
+        timesToFill.push(time);
+      }
+    }
+
+    if (timesToFill.length === 0) return;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
+    const timestamp = Date.now();
+    const tempIds = timesToFill.map((_, i) => `temp-${timestamp}-fill-${i}`);
+
+    const tempSlots: TimeSlot[] = timesToFill.map((time, i) => ({
+      id: tempIds[i],
+      project_id: projectId,
+      date: dateString,
+      time_slot: time,
+    }));
+
+    setSlots((prev) =>
+      [...prev, ...tempSlots].sort((a, b) => a.time_slot - b.time_slot)
+    );
+
+    try {
+      const { data, error } = await supabase
+        .from("time_slots")
+        .insert(
+          timesToFill.map((time) => ({
+            project_id: projectId,
+            user_id: user.id,
+            date: dateString,
+            time_slot: time,
+          }))
+        )
+        .select();
+
+      if (error) throw error;
+
+      setSlots((prev) =>
+        [...prev.filter((s) => !tempIds.includes(s.id)), ...(data as TimeSlot[])].sort(
+          (a, b) => a.time_slot - b.time_slot
+        )
+      );
+
+      toast.success(`Added ${timesToFill.length} slot${timesToFill.length > 1 ? "s" : ""}`);
+    } catch (error) {
+      setSlots((prev) => prev.filter((s) => !tempIds.includes(s.id)));
+      console.error("Error filling range:", error);
+      toast.error("Failed to fill range");
+      throw error;
+    }
+  };
+
   return {
     slots,
     isLoading,
@@ -268,5 +329,6 @@ export function useTimeSlots(date: Date) {
     replaceSlot,
     deleteSlots,
     updateNote,
+    fillRange,
   };
 }
