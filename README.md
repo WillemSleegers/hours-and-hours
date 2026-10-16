@@ -125,14 +125,17 @@ The interface is designed around a simple tap-based interaction model optimized 
 ## Development
 
 ```bash
+# Install dependencies (pnpm via Corepack or Homebrew)
+pnpm install
+
 # Run development server
-npm run dev
+pnpm dev
 
 # Build for production
-npm run build
+pnpm build
 
 # Start production server
-npm start
+pnpm start
 ```
 
 ## Architecture

@@ -1,8 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx npm-check-updates *)",
-      "Bash(npx fallow *)"
+      "Bash(pnpm outdated *)",
+      "Bash(pnpm dlx fallow *)"
     ]
   }
 }

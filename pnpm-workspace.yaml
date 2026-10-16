@@ -1,0 +1,6 @@
+allowBuilds:
+  sharp: true
+  unrs-resolver: false
+
+# Skip versions published less than 24h ago (minutes)
+minimumReleaseAge: 1440
