@@ -85,14 +85,6 @@ export default function Home() {
     setActiveProjectId(projectId)
   }
 
-  const handleSlotDelete = async (slotId: string) => {
-    const slot = slots.find((s) => s.id === slotId)
-    if (!slot) return
-
-    // Delete just this one slot
-    await deleteSlots(slot.time_slot, slot.time_slot + 0.25)
-  }
-
   const totalHours = slots.length * 0.25 // Each slot is 15 minutes (0.25 hours)
 
   // Show loading state only while checking auth
@@ -154,7 +146,7 @@ export default function Home() {
               projects={projects}
               onSlotToggle={toggleSlot}
               onSlotReplace={replaceSlot}
-              onSlotDelete={handleSlotDelete}
+              onSlotDelete={deleteSlots}
               onNoteUpdate={updateNote}
               onFillRange={fillRange}
               activeProjectId={activeProjectId}

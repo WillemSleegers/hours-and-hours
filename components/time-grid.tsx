@@ -25,7 +25,7 @@ interface TimeGridProps {
   projects: Project[]
   onSlotToggle: (projectId: string, timeSlot: number) => void
   onSlotReplace: (slotId: string, newProjectId: string) => void
-  onSlotDelete: (slotId: string) => void
+  onSlotDelete: (slotIds: string[]) => void
   onNoteUpdate: (slotId: string, note: string) => void
   onFillRange: (projectId: string, startTime: number, endTime: number) => void
   activeProjectId: string | null
@@ -216,8 +216,8 @@ export function TimeGrid({
       }
     }
 
-    // Delete all slots in the entry
-    slotsToDelete.forEach(s => onSlotDelete(s.id))
+    // Delete all slots in the entry in one request
+    onSlotDelete(slotsToDelete.map(s => s.id))
     setSelectedSlotTime(null)
   }
 
@@ -337,7 +337,7 @@ export function TimeGrid({
                         onPointerUp={(e) => e.stopPropagation()}
                         onSelect={(e) => {
                           e.preventDefault()
-                          onSlotDelete(slot.id)
+                          onSlotDelete([slot.id])
                           setSelectedSlotTime(null)
                         }}
                       >

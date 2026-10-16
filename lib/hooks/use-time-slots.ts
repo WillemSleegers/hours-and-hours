@@ -144,89 +144,69 @@ export function useTimeSlots(date: Date) {
     const slotToReplace = slots.find((s) => s.id === slotId);
     if (!slotToReplace) return;
 
-    const oldSlots = [...slots];
-    const tempId = `temp-${Date.now()}`;
-    const newSlot: TimeSlot = {
-      id: tempId,
-      project_id: newProjectId,
-      date: slotToReplace.date,
-      time_slot: slotToReplace.time_slot,
-    };
-
-    // Optimistic update - replace old slot with new one atomically
+    // Optimistic update - reassign the slot in place (replacing drops the note)
     setSlots((prev) =>
-      prev.map((s) => (s.id === slotId ? newSlot : s))
+      prev.map((s) =>
+        s.id === slotId ? { ...s, project_id: newProjectId, note: null } : s
+      )
     );
 
     try {
-      // Get current user for RLS policy
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("User not authenticated");
-
-      // Delete old slot and insert new one
-      const { error: deleteError } = await supabase
+      // A single update keeps the database consistent if the request fails
+      const { data, error } = await supabase
         .from("time_slots")
-        .delete()
-        .eq("id", slotId);
-
-      if (deleteError) throw deleteError;
-
-      const { data, error: insertError } = await supabase
-        .from("time_slots")
-        .insert({
-          project_id: newProjectId,
-          user_id: user.id,
-          date: slotToReplace.date,
-          time_slot: slotToReplace.time_slot,
-        })
+        .update({ project_id: newProjectId, note: null })
+        .eq("id", slotId)
         .select()
         .single();
 
-      if (insertError) throw insertError;
+      if (error) throw error;
 
-      // Replace temp slot with real one
       setSlots((prev) =>
-        prev.map((s) => (s.id === tempId ? (data as TimeSlot) : s))
+        prev.map((s) => (s.id === slotId ? (data as TimeSlot) : s))
       );
 
       toast.success("Slot replaced");
       return data;
     } catch (error) {
-      // Rollback on error
-      setSlots(oldSlots);
+      // Rollback on error - restore only this slot
+      setSlots((prev) =>
+        prev.map((s) => (s.id === slotId ? slotToReplace : s))
+      );
       console.error("Error replacing slot:", error);
       toast.error("Failed to replace slot");
       throw error;
     }
   };
 
-  const deleteSlots = async (startTime: number, endTime: number) => {
-    // Find all slots in the time range
+  const deleteSlots = async (slotIds: string[]) => {
+    // Slots still being inserted have no database row yet
     const slotsToDelete = slots.filter(
-      (s) => s.time_slot >= startTime && s.time_slot < endTime
+      (s) => slotIds.includes(s.id) && !s.id.startsWith("temp-")
     );
 
     if (slotsToDelete.length === 0) {
       return;
     }
 
-    const oldSlots = [...slots];
-    const slotIds = slotsToDelete.map((s) => s.id);
+    const idsToDelete = slotsToDelete.map((s) => s.id);
 
     // Optimistic update - delete slots
-    setSlots((prev) => prev.filter((s) => !slotIds.includes(s.id)));
+    setSlots((prev) => prev.filter((s) => !idsToDelete.includes(s.id)));
 
     try {
       const { error } = await supabase
         .from("time_slots")
         .delete()
-        .in("id", slotIds);
+        .in("id", idsToDelete);
 
       if (error) throw error;
       toast.success(`Removed ${slotsToDelete.length} slot${slotsToDelete.length > 1 ? 's' : ''}`);
     } catch (error) {
-      // Rollback on error
-      setSlots(oldSlots);
+      // Rollback on error - restore only the deleted slots
+      setSlots((prev) =>
+        [...prev, ...slotsToDelete].sort((a, b) => a.time_slot - b.time_slot)
+      );
       console.error("Error deleting slots:", error);
       toast.error("Failed to delete slots");
       throw error;

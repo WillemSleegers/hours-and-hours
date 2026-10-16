@@ -25,6 +25,8 @@ import { computeProjectHours, hoursMapToStats } from "@/lib/stats"
 import { ProjectStats } from "@/lib/types"
 import { toast } from "sonner"
 
+const STATS_PAGE_SIZE = 1000
+
 export default function StatisticsPage() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
@@ -50,13 +52,22 @@ export default function StatisticsPage() {
 
     const loadAllSlots = async () => {
       try {
-        const { data, error } = await supabase
-          .from("time_slots")
-          .select("project_id, date, time_slot, note")
-          .order("date")
+        // Supabase caps each response (1000 rows by default), so fetch in pages.
+        // Advance by the rows actually received in case the server cap is lower.
+        const slots: typeof allSlots = []
+        while (true) {
+          const { data, error } = await supabase
+            .from("time_slots")
+            .select("project_id, date, time_slot, note")
+            .order("date")
+            .order("time_slot")
+            .range(slots.length, slots.length + STATS_PAGE_SIZE - 1)
 
-        if (error) throw error
-        setAllSlots(data)
+          if (error) throw error
+          if (data.length === 0) break
+          slots.push(...data)
+        }
+        setAllSlots(slots)
       } catch (error) {
         console.error("Error loading project stats:", error)
       } finally {
