@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { format } from "date-fns";
+import { addDays, format, isValid, parseISO, subDays } from "date-fns";
 import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,11 +23,22 @@ function DayStatsContent() {
   const { user, loading: authLoading } = useAuth();
   const { projects } = useProjects();
 
-  // Get date from query params or default to today
+  // The URL's date wins (so links and reloads work), falling back to the
+  // shared selected day. parseISO reads "yyyy-MM-dd" as local midnight;
+  // new Date() would read it as UTC.
+  const { currentDate: selectedDate, setCurrentDate } = useDateNavigation();
   const dateParam = searchParams.get("date");
-  const { currentDate, setCurrentDate, handlePreviousDay, handleNextDay, handleToday } = useDateNavigation(
-    dateParam ? new Date(dateParam) : new Date()
-  );
+  const parsedDate = dateParam ? parseISO(dateParam) : null;
+  const currentDate = parsedDate && isValid(parsedDate) ? parsedDate : selectedDate;
+
+  // Navigating here updates both the shared day (so Back lands on it) and the URL
+  const goToDate = (date: Date) => {
+    setCurrentDate(date);
+    router.replace(`/day?date=${format(date, "yyyy-MM-dd")}`);
+  };
+  const handlePreviousDay = () => goToDate(subDays(currentDate, 1));
+  const handleNextDay = () => goToDate(addDays(currentDate, 1));
+  const handleToday = () => goToDate(new Date());
 
   const { slots } = useTimeSlots(currentDate);
 
@@ -37,12 +48,6 @@ function DayStatsContent() {
       router.push("/login");
     }
   }, [authLoading, user, router]);
-
-  // Update URL when date changes
-  useEffect(() => {
-    const dateString = format(currentDate, "yyyy-MM-dd");
-    router.replace(`/day?date=${dateString}`);
-  }, [currentDate, router]);
 
   const getStats = (): ProjectStats[] =>
     hoursMapToStats(computeProjectHours(slots, projects)).filter(
@@ -147,7 +152,7 @@ function DayStatsContent() {
               <Calendar
                 mode="single"
                 selected={currentDate}
-                onSelect={(date) => date && setCurrentDate(date)}
+                onSelect={(date) => date && goToDate(date)}
               />
               <div className="p-3 border-t">
                 <Button

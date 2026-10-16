@@ -1,11 +1,12 @@
-import { useState } from "react"
 import { addDays, subDays } from "date-fns"
+import { useDateContext } from "@/lib/contexts/date-context"
 
-export function useDateNavigation(initialDate: Date = new Date()) {
-  const [currentDate, setCurrentDate] = useState(initialDate)
+// The selected day is shared across pages via DateProvider
+export function useDateNavigation() {
+  const { currentDate, setCurrentDate } = useDateContext()
 
-  const handlePreviousDay = () => setCurrentDate((date) => subDays(date, 1))
-  const handleNextDay = () => setCurrentDate((date) => addDays(date, 1))
+  const handlePreviousDay = () => setCurrentDate(subDays(currentDate, 1))
+  const handleNextDay = () => setCurrentDate(addDays(currentDate, 1))
   const handleToday = () => setCurrentDate(new Date())
 
   return { currentDate, setCurrentDate, handlePreviousDay, handleNextDay, handleToday }

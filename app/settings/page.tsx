@@ -89,7 +89,7 @@ export default function SettingsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     {Array.from({ length: 24 }, (_, i) => (
-                      <SelectItem key={i} value={i.toString()}>
+                      <SelectItem key={i} value={i.toString()} disabled={i >= settings.day_end_hour}>
                         {i.toString().padStart(2, "0")}:00
                       </SelectItem>
                     ))}
@@ -105,7 +105,7 @@ export default function SettingsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     {Array.from({ length: 24 }, (_, i) => i + 1).map((hour) => (
-                      <SelectItem key={hour} value={hour.toString()}>
+                      <SelectItem key={hour} value={hour.toString()} disabled={hour <= settings.day_start_hour}>
                         {hour.toString().padStart(2, "0")}:00
                       </SelectItem>
                     ))}

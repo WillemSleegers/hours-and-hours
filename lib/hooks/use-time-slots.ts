@@ -2,56 +2,72 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/hooks/use-auth";
 import { TimeSlot } from "@/lib/types";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
+const NO_SLOTS: TimeSlot[] = [];
+const bySlotTime = (a: TimeSlot, b: TimeSlot) => a.time_slot - b.time_slot;
+
+// Mutations report failures with a toast and roll back their own optimistic
+// update; they never throw, so callers can fire them without awaiting.
 export function useTimeSlots(date: Date) {
-  const [slots, setSlots] = useState<TimeSlot[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth();
+  const userId = user?.id;
+
+  // Slots are tagged with the date they belong to, so responses that arrive
+  // after the user has moved to another day are dropped instead of shown there
+  const [daySlots, setDaySlots] = useState<{ date: string; slots: TimeSlot[] } | null>(null);
 
   const dateString = format(date, "yyyy-MM-dd");
+  const slots = daySlots?.date === dateString ? daySlots.slots : NO_SLOTS;
+  const isLoading = daySlots?.date !== dateString;
+
+  // Update the slots of `dateString` (captured when the mutation started),
+  // unless the user has since navigated to another day
+  const updateSlots = (update: (slots: TimeSlot[]) => TimeSlot[]) => {
+    setDaySlots((prev) =>
+      prev?.date === dateString ? { date: dateString, slots: update(prev.slots) } : prev
+    );
+  };
 
   // Fetch slots for the current date only
   useEffect(() => {
+    if (!userId) return;
+    let ignore = false;
+
     const loadSlots = async () => {
-      // Clear slots immediately when date changes, then start loading
-      setSlots([]);
-      setIsLoading(true);
+      const { data, error } = await supabase
+        .from("time_slots")
+        .select("*")
+        .eq("date", dateString)
+        .order("time_slot");
 
-      try {
-        // Only load slots for the current date
-        const { data, error } = await supabase
-          .from("time_slots")
-          .select("*")
-          .eq("date", dateString)
-          .order("time_slot");
-
-        if (error) throw error;
-        console.log(`Loaded ${data?.length || 0} time slots for ${dateString}`);
-        setSlots((data as TimeSlot[]) || []);
-      } catch (error) {
+      if (ignore) return;
+      if (error) {
         console.error("Error loading time slots:", error);
         toast.error("Failed to load time slots");
-      } finally {
-        setIsLoading(false);
       }
+      setDaySlots({ date: dateString, slots: data ?? [] });
     };
 
     loadSlots();
-  }, [dateString]); // Re-fetch when date changes
+    return () => {
+      ignore = true;
+    };
+  }, [dateString, userId]);
 
   const toggleSlot = async (projectId: string, timeSlot: number) => {
-    // Check if a slot already exists at this time (defensive check)
-    const existingSlot = slots.find((s) => s.time_slot === timeSlot);
+    if (!userId) return;
 
-    if (existingSlot) {
-      console.warn("Slot already exists at this time:", existingSlot);
+    // Defensive check - the grid only adds slots at empty times
+    if (slots.some((s) => s.time_slot === timeSlot)) {
       toast.error("Slot already exists at this time");
-      return existingSlot;
+      return;
     }
 
-    // Add the slot with optimistic update
+    // Optimistic update
     const tempId = `temp-${Date.now()}-${Math.random()}`;
     const newSlot: TimeSlot = {
       id: tempId,
@@ -59,124 +75,80 @@ export function useTimeSlots(date: Date) {
       date: dateString,
       time_slot: timeSlot,
     };
+    updateSlots((prev) => [...prev, newSlot].sort(bySlotTime));
 
-    // Optimistic update - insert in sorted position
-    setSlots((prev) => {
-      const insertIndex = prev.findIndex((s) => s.time_slot > timeSlot);
-      if (insertIndex === -1) {
-        return [...prev, newSlot];
-      }
-      return [...prev.slice(0, insertIndex), newSlot, ...prev.slice(insertIndex)];
-    });
+    const { data, error } = await supabase
+      .from("time_slots")
+      .insert({
+        project_id: projectId,
+        user_id: userId,
+        date: dateString,
+        time_slot: timeSlot,
+      })
+      .select()
+      .single();
 
-    try {
-      // Get current user for RLS policy
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("User not authenticated");
-
-      const { data, error } = await supabase
-        .from("time_slots")
-        .insert({
-          project_id: projectId,
-          user_id: user.id,
-          date: dateString,
-          time_slot: timeSlot,
-        })
-        .select()
-        .single();
-
-      if (error) {
-        // Check if it's a duplicate key error (code 23505)
-        if (typeof error === 'object' && error !== null && 'code' in error && error.code === '23505') {
-          // Slot already exists in database but not in our state - reload slots for this date
-          console.warn("Duplicate slot detected, reloading slots for", dateString);
-
-          // First remove the temporary optimistic slot
-          setSlots((prev) => prev.filter((s) => s.id !== tempId));
-
-          // Then reload fresh data from database for this date only
-          const { data: refreshedSlots, error: refreshError } = await supabase
-            .from("time_slots")
-            .select("*")
-            .eq("date", dateString)
-            .order("time_slot");
-
-          if (refreshError) {
-            console.error("Failed to refresh slots:", refreshError);
-            toast.error("Failed to refresh slots");
-          } else if (refreshedSlots) {
-            setSlots(refreshedSlots as TimeSlot[]);
-            console.log(`Reloaded ${refreshedSlots.length} slots for ${dateString}`);
-          }
-
-          toast.error("Slot already exists");
-          return;
-        }
-        throw error;
-      }
-
-      // Replace temp slot with real one
-      setSlots((prev) =>
-        prev.map((s) => (s.id === tempId ? (data as TimeSlot) : s))
-      );
-
-      toast.success("Slot added");
-      return data;
-    } catch (error) {
+    if (error) {
       // Rollback on error
-      setSlots((prev) => prev.filter((s) => s.id !== tempId));
+      updateSlots((prev) => prev.filter((s) => s.id !== tempId));
 
-      // Better error logging for Supabase errors
-      const errorMessage = error instanceof Error
-        ? error.message
-        : typeof error === 'object' && error !== null
-          ? JSON.stringify(error, Object.getOwnPropertyNames(error))
-          : String(error);
+      if (error.code === "23505") {
+        // Slot already exists in database but not in our state - reload slots for this date
+        const { data: refreshedSlots, error: refreshError } = await supabase
+          .from("time_slots")
+          .select("*")
+          .eq("date", dateString)
+          .order("time_slot");
 
-      console.error("Error adding slot:", errorMessage);
-      toast.error(`Failed to add slot: ${errorMessage}`);
-      throw error;
+        if (refreshError) {
+          console.error("Failed to refresh slots:", refreshError);
+          toast.error("Failed to refresh slots");
+        } else {
+          updateSlots(() => refreshedSlots);
+        }
+        toast.error("Slot already exists");
+        return;
+      }
+
+      console.error("Error adding slot:", error);
+      toast.error(`Failed to add slot: ${error.message}`);
+      return;
     }
+
+    // Replace temp slot with real one
+    updateSlots((prev) => prev.map((s) => (s.id === tempId ? data : s)));
+    toast.success("Slot added");
   };
 
   const replaceSlot = async (slotId: string, newProjectId: string) => {
-    // Find the slot to replace
     const slotToReplace = slots.find((s) => s.id === slotId);
     if (!slotToReplace) return;
 
     // Optimistic update - reassign the slot in place (replacing drops the note)
-    setSlots((prev) =>
+    updateSlots((prev) =>
       prev.map((s) =>
         s.id === slotId ? { ...s, project_id: newProjectId, note: null } : s
       )
     );
 
-    try {
-      // A single update keeps the database consistent if the request fails
-      const { data, error } = await supabase
-        .from("time_slots")
-        .update({ project_id: newProjectId, note: null })
-        .eq("id", slotId)
-        .select()
-        .single();
+    // A single update keeps the database consistent if the request fails
+    const { data, error } = await supabase
+      .from("time_slots")
+      .update({ project_id: newProjectId, note: null })
+      .eq("id", slotId)
+      .select()
+      .single();
 
-      if (error) throw error;
-
-      setSlots((prev) =>
-        prev.map((s) => (s.id === slotId ? (data as TimeSlot) : s))
-      );
-
-      toast.success("Slot replaced");
-      return data;
-    } catch (error) {
+    if (error) {
       // Rollback on error - restore only this slot
-      setSlots((prev) =>
-        prev.map((s) => (s.id === slotId ? slotToReplace : s))
-      );
+      updateSlots((prev) => prev.map((s) => (s.id === slotId ? slotToReplace : s)));
       console.error("Error replacing slot:", error);
       toast.error("Failed to replace slot");
-      throw error;
+      return;
     }
+
+    updateSlots((prev) => prev.map((s) => (s.id === slotId ? data : s)));
+    toast.success("Slot replaced");
   };
 
   const deleteSlots = async (slotIds: string[]) => {
@@ -192,71 +164,70 @@ export function useTimeSlots(date: Date) {
     const idsToDelete = slotsToDelete.map((s) => s.id);
 
     // Optimistic update - delete slots
-    setSlots((prev) => prev.filter((s) => !idsToDelete.includes(s.id)));
+    updateSlots((prev) => prev.filter((s) => !idsToDelete.includes(s.id)));
 
-    try {
-      const { error } = await supabase
-        .from("time_slots")
-        .delete()
-        .in("id", idsToDelete);
+    const { error } = await supabase
+      .from("time_slots")
+      .delete()
+      .in("id", idsToDelete);
 
-      if (error) throw error;
-      toast.success(`Removed ${slotsToDelete.length} slot${slotsToDelete.length > 1 ? 's' : ''}`);
-    } catch (error) {
+    if (error) {
       // Rollback on error - restore only the deleted slots
-      setSlots((prev) =>
-        [...prev, ...slotsToDelete].sort((a, b) => a.time_slot - b.time_slot)
-      );
+      updateSlots((prev) => [...prev, ...slotsToDelete].sort(bySlotTime));
       console.error("Error deleting slots:", error);
       toast.error("Failed to delete slots");
-      throw error;
+      return;
     }
+
+    toast.success(`Removed ${slotsToDelete.length} slot${slotsToDelete.length > 1 ? 's' : ''}`);
   };
 
   const updateNote = async (slotId: string, note: string) => {
-    const oldSlots = [...slots];
+    const slot = slots.find((s) => s.id === slotId);
+    if (!slot) return;
+    const previousNote = slot.note ?? null;
 
     // Convert empty/whitespace-only string to null, otherwise preserve the note as-is
     const noteValue = note.trim() === "" ? null : note;
 
     // Optimistic update
-    setSlots((prev) =>
+    updateSlots((prev) =>
       prev.map((s) => (s.id === slotId ? { ...s, note: noteValue } : s))
     );
 
-    try {
-      const { error } = await supabase
-        .from("time_slots")
-        .update({ note: noteValue })
-        .eq("id", slotId);
+    const { error } = await supabase
+      .from("time_slots")
+      .update({ note: noteValue })
+      .eq("id", slotId);
 
-      if (error) throw error;
-      toast.success(noteValue ? "Note saved" : "Note cleared");
-    } catch (error) {
-      // Rollback on error
-      setSlots(oldSlots);
+    if (error) {
+      // Rollback on error - restore only this note
+      updateSlots((prev) =>
+        prev.map((s) => (s.id === slotId ? { ...s, note: previousNote } : s))
+      );
       console.error("Error updating note:", error);
       toast.error("Failed to save note");
-      throw error;
+      return;
     }
+
+    toast.success(noteValue ? "Note saved" : "Note cleared");
   };
 
   const fillRange = async (projectId: string, startTime: number, endTime: number) => {
+    if (!userId) return;
+
     const startQuarter = Math.round(startTime * 4);
     const endQuarter = Math.round(endTime * 4);
 
     const timesToFill: number[] = [];
     for (let q = startQuarter; q <= endQuarter; q++) {
       const time = q / 4;
-      if (!slots.find((s) => s.time_slot === time)) {
+      if (!slots.some((s) => s.time_slot === time)) {
         timesToFill.push(time);
       }
     }
 
     if (timesToFill.length === 0) return;
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not authenticated");
 
     const timestamp = Date.now();
     const tempIds = timesToFill.map((_, i) => `temp-${timestamp}-fill-${i}`);
@@ -268,38 +239,31 @@ export function useTimeSlots(date: Date) {
       time_slot: time,
     }));
 
-    setSlots((prev) =>
-      [...prev, ...tempSlots].sort((a, b) => a.time_slot - b.time_slot)
-    );
+    updateSlots((prev) => [...prev, ...tempSlots].sort(bySlotTime));
 
-    try {
-      const { data, error } = await supabase
-        .from("time_slots")
-        .insert(
-          timesToFill.map((time) => ({
-            project_id: projectId,
-            user_id: user.id,
-            date: dateString,
-            time_slot: time,
-          }))
-        )
-        .select();
+    const { data, error } = await supabase
+      .from("time_slots")
+      .insert(
+        timesToFill.map((time) => ({
+          project_id: projectId,
+          user_id: userId,
+          date: dateString,
+          time_slot: time,
+        }))
+      )
+      .select();
 
-      if (error) throw error;
-
-      setSlots((prev) =>
-        [...prev.filter((s) => !tempIds.includes(s.id)), ...(data as TimeSlot[])].sort(
-          (a, b) => a.time_slot - b.time_slot
-        )
-      );
-
-      toast.success(`Added ${timesToFill.length} slot${timesToFill.length > 1 ? "s" : ""}`);
-    } catch (error) {
-      setSlots((prev) => prev.filter((s) => !tempIds.includes(s.id)));
+    if (error) {
+      updateSlots((prev) => prev.filter((s) => !tempIds.includes(s.id)));
       console.error("Error filling range:", error);
       toast.error("Failed to fill range");
-      throw error;
+      return;
     }
+
+    updateSlots((prev) =>
+      [...prev.filter((s) => !tempIds.includes(s.id)), ...data].sort(bySlotTime)
+    );
+    toast.success(`Added ${timesToFill.length} slot${timesToFill.length > 1 ? "s" : ""}`);
   };
 
   return {

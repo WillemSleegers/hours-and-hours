@@ -40,8 +40,8 @@ export function Footer({
 }: FooterProps) {
   const [datePickerOpen, setDatePickerOpen] = useState(false)
 
-  // Filter to show only non-archived projects
-  const activeProjects = projects.filter((p) => !p.archived)
+  // Only non-archived projects that have been saved (temp IDs have no database row yet)
+  const activeProjects = projects.filter((p) => !p.archived && !p.id.startsWith("temp-"))
   return (
     <footer className="sticky bottom-0 z-50 p-3">
       <div className="bg-card border border-border rounded-2xl px-3 py-2 flex flex-wrap items-center gap-3">

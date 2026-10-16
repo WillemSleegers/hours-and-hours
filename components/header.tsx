@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { format } from "date-fns"
+import { format, isToday } from "date-fns"
 import { Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -63,7 +63,7 @@ export function Header({
                 {totalHours.toFixed(1)}
               </span>
               <span className="text-xs text-muted-foreground font-medium leading-none pb-0.5">
-                hrs today
+                {isToday(currentDate) ? "hrs today" : "hrs"}
               </span>
             </Button>
           ) : null}

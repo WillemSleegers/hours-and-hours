@@ -2,46 +2,69 @@
 
 import { createContext, useContext, useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
+import { useAuthContext } from "@/lib/contexts/auth-context"
 import { Project } from "@/lib/types"
 import { toast } from "sonner"
 
+// Mutations report failures with a toast and roll back their own optimistic
+// update; they never throw, and resolve to whether they succeeded.
 interface ProjectsContextType {
   projects: Project[]
   isLoading: boolean
-  addProject: (name: string, color: string) => Promise<Project>
-  updateProject: (id: string, name: string, color: string) => Promise<void>
-  deleteProject: (id: string) => Promise<void>
-  toggleArchive: (id: string) => Promise<void>
+  addProject: (name: string, color: string) => Promise<boolean>
+  updateProject: (id: string, name: string, color: string) => Promise<boolean>
+  deleteProject: (id: string) => Promise<boolean>
+  toggleArchive: (id: string) => Promise<boolean>
 }
 
 const ProjectsContext = createContext<ProjectsContextType | undefined>(undefined)
 
+const NO_PROJECTS: Project[] = []
+const byName = (a: Project, b: Project) => a.name.localeCompare(b.name)
+
 export function ProjectsProvider({ children }: { children: React.ReactNode }) {
-  const [projects, setProjects] = useState<Project[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const { user } = useAuthContext()
+  const userId = user?.id
+
+  // Projects are tagged with the user they were loaded for, so they are
+  // reloaded on sign-in and never shown to a different (or signed-out) user
+  const [loaded, setLoaded] = useState<{ userId: string; projects: Project[] } | null>(null)
+  const projects = userId && loaded?.userId === userId ? loaded.projects : NO_PROJECTS
+  const isLoading = !!userId && loaded?.userId !== userId
+
+  const updateProjects = (update: (projects: Project[]) => Project[]) => {
+    setLoaded((prev) =>
+      prev && prev.userId === userId ? { ...prev, projects: update(prev.projects) } : prev
+    )
+  }
 
   useEffect(() => {
-    const loadProjects = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("projects")
-          .select("*")
-          .order("name")
+    if (!userId) return
+    let ignore = false
 
-        if (error) throw error
-        setProjects((data as Project[]) || [])
-      } catch (error) {
+    const loadProjects = async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*")
+        .order("name")
+
+      if (ignore) return
+      if (error) {
         console.error("Error loading projects:", error)
         toast.error("Failed to load projects")
-      } finally {
-        setIsLoading(false)
       }
+      setLoaded({ userId, projects: data ?? [] })
     }
 
     loadProjects()
-  }, [])
+    return () => {
+      ignore = true
+    }
+  }, [userId])
 
   const addProject = async (name: string, color: string) => {
+    if (!userId) return false
+
     const tempId = `temp-${Date.now()}`
     const newProject: Project = {
       id: tempId,
@@ -51,99 +74,91 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }) {
     }
 
     // Optimistic update
-    setProjects((prev) => [...prev, newProject])
+    updateProjects((prev) => [...prev, newProject])
 
-    try {
-      // Get current user
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) throw new Error("User not authenticated")
+    const { data, error } = await supabase
+      .from("projects")
+      .insert({ name, color, user_id: userId })
+      .select()
+      .single()
 
-      const { data, error } = await supabase
-        .from("projects")
-        .insert({ name, color, user_id: user.id })
-        .select()
-        .single()
-
-      if (error) throw error
-
-      // Replace temp project with real one
-      setProjects((prev) => prev.map((p) => (p.id === tempId ? (data as Project) : p)))
-
-      toast.success("Project created")
-      return data
-    } catch (error) {
+    if (error) {
       // Rollback on error
-      setProjects((prev) => prev.filter((p) => p.id !== tempId))
+      updateProjects((prev) => prev.filter((p) => p.id !== tempId))
       console.error("Error adding project:", error)
       toast.error("Failed to create project")
-      throw error
+      return false
     }
+
+    // Replace temp project with real one
+    updateProjects((prev) => prev.map((p) => (p.id === tempId ? data : p)))
+    toast.success("Project created")
+    return true
   }
 
   const updateProject = async (id: string, name: string, color: string) => {
     const oldProject = projects.find((p) => p.id === id)
-    if (!oldProject) return
+    if (!oldProject) return false
 
     // Optimistic update
-    setProjects((prev) => prev.map((p) => (p.id === id ? { ...p, name, color } : p)))
+    updateProjects((prev) => prev.map((p) => (p.id === id ? { ...p, name, color } : p)))
 
-    try {
-      const { error } = await supabase.from("projects").update({ name, color }).eq("id", id)
+    const { error } = await supabase.from("projects").update({ name, color }).eq("id", id)
 
-      if (error) throw error
-      toast.success("Project updated")
-    } catch (error) {
+    if (error) {
       // Rollback on error
-      setProjects((prev) => prev.map((p) => (p.id === id ? oldProject : p)))
+      updateProjects((prev) => prev.map((p) => (p.id === id ? oldProject : p)))
       console.error("Error updating project:", error)
       toast.error("Failed to update project")
-      throw error
+      return false
     }
+
+    toast.success("Project updated")
+    return true
   }
 
   const deleteProject = async (id: string) => {
-    const oldProjects = [...projects]
+    const oldProject = projects.find((p) => p.id === id)
+    if (!oldProject) return false
 
     // Optimistic update
-    setProjects((prev) => prev.filter((p) => p.id !== id))
+    updateProjects((prev) => prev.filter((p) => p.id !== id))
 
-    try {
-      const { error } = await supabase.from("projects").delete().eq("id", id)
+    const { error } = await supabase.from("projects").delete().eq("id", id)
 
-      if (error) throw error
-      toast.success("Project deleted")
-    } catch (error) {
-      // Rollback on error
-      setProjects(oldProjects)
+    if (error) {
+      // Rollback on error - restore only this project
+      updateProjects((prev) => [...prev, oldProject].sort(byName))
       console.error("Error deleting project:", error)
       toast.error("Failed to delete project")
-      throw error
+      return false
     }
+
+    toast.success("Project deleted")
+    return true
   }
 
   const toggleArchive = async (id: string) => {
     const project = projects.find((p) => p.id === id)
-    if (!project) return
+    if (!project) return false
 
     const newArchivedState = !project.archived
 
     // Optimistic update
-    setProjects((prev) => prev.map((p) => (p.id === id ? { ...p, archived: newArchivedState } : p)))
+    updateProjects((prev) => prev.map((p) => (p.id === id ? { ...p, archived: newArchivedState } : p)))
 
-    try {
-      const { error } = await supabase.from("projects").update({ archived: newArchivedState }).eq("id", id)
+    const { error } = await supabase.from("projects").update({ archived: newArchivedState }).eq("id", id)
 
-      if (error) throw error
-      toast.success(newArchivedState ? "Project archived" : "Project unarchived")
-    } catch (error) {
+    if (error) {
       // Rollback on error
-      setProjects((prev) => prev.map((p) => (p.id === id ? project : p)))
+      updateProjects((prev) => prev.map((p) => (p.id === id ? project : p)))
       console.error("Error toggling archive:", error)
       toast.error("Failed to update project")
-      throw error
+      return false
     }
+
+    toast.success(newArchivedState ? "Project archived" : "Project unarchived")
+    return true
   }
 
   return (

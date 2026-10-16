@@ -62,21 +62,12 @@ export default function ProjectsPage() {
     }
   }, [authLoading, user, router])
 
-  const handleAddProject = async (name: string, color: string) => {
-    await addProject(name, color)
-    setShowAddProject(false)
-  }
-
-  const handleEditProject = async (name: string, color: string) => {
-    if (editingProject) {
-      await updateProject(editingProject.id, name, color)
-      setEditingProject(null)
-    }
-  }
+  // ProjectForm closes itself once the save succeeds
+  const handleEditProject = async (name: string, color: string) =>
+    editingProject ? updateProject(editingProject.id, name, color) : false
 
   const handleDeleteProject = async () => {
-    if (deletingProject) {
-      await deleteProject(deletingProject.id)
+    if (deletingProject && (await deleteProject(deletingProject.id))) {
       setDeletingProject(null)
     }
   }
@@ -212,7 +203,7 @@ export default function ProjectsPage() {
       <ProjectForm
         open={showAddProject}
         onClose={() => setShowAddProject(false)}
-        onSubmit={handleAddProject}
+        onSubmit={addProject}
         title="Create Project"
         description="Add a new project to track your time"
       />

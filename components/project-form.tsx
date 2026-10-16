@@ -16,7 +16,7 @@ import {
 interface ProjectFormProps {
   open: boolean
   onClose: () => void
-  onSubmit: (name: string, color: string) => Promise<void>
+  onSubmit: (name: string, color: string) => Promise<boolean>
   initialName?: string
   initialColor?: string
   title: string
@@ -62,13 +62,14 @@ export function ProjectForm({
     if (!name.trim()) return
 
     setIsSubmitting(true)
-    try {
-      await onSubmit(name.trim(), color)
+    const saved = await onSubmit(name.trim(), color)
+    setIsSubmitting(false)
+
+    // Keep the dialog open on failure so the input isn't lost
+    if (saved) {
       setName("")
       setColor("#3b82f6")
       onClose()
-    } finally {
-      setIsSubmitting(false)
     }
   }
 

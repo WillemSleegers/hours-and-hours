@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/lib/contexts/auth-context";
 import { ProjectsProvider } from "@/lib/contexts/projects-context";
 import { SettingsProvider } from "@/lib/contexts/settings-context";
+import { DateProvider } from "@/lib/contexts/date-context";
 import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
@@ -30,7 +31,7 @@ export const metadata: Metadata = {
       { url: "/apple-icon-180.png", sizes: "180x180", type: "image/png" },
     ],
   },
-  manifest: "/manifest.json",
+  // The manifest link is added automatically from app/manifest.ts
 };
 
 export const viewport = {
@@ -58,20 +59,22 @@ export default function RootLayout({
         <AuthProvider>
           <SettingsProvider>
             <ProjectsProvider>
-              <ThemeProvider
-                attribute="class"
-                defaultTheme="system"
-                enableSystem
-                disableTransitionOnChange
-              >
-                {children}
-                <Toaster
-                  position="top-center"
-                  duration={2000}
-                  closeButton
-                  richColors
-                />
-              </ThemeProvider>
+              <DateProvider>
+                <ThemeProvider
+                  attribute="class"
+                  defaultTheme="system"
+                  enableSystem
+                  disableTransitionOnChange
+                >
+                  {children}
+                  <Toaster
+                    position="top-center"
+                    duration={2000}
+                    closeButton
+                    richColors
+                  />
+                </ThemeProvider>
+              </DateProvider>
             </ProjectsProvider>
           </SettingsProvider>
         </AuthProvider>
