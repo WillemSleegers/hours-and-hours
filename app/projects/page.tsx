@@ -217,7 +217,9 @@ export default function ProjectsPage() {
         description="Add a new project to track your time"
       />
 
+      {/* Keyed by project so the form remounts with that project's values */}
       <ProjectForm
+        key={editingProject?.id ?? "edit"}
         open={!!editingProject}
         onClose={() => setEditingProject(null)}
         onSubmit={handleEditProject}

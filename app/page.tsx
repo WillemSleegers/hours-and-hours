@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
 import { TimeGrid } from "@/components/time-grid"
 import { Header } from "@/components/header"
@@ -36,11 +37,7 @@ export default function Home() {
     updateNote,
     fillRange,
   } = useTimeSlots(currentDate)
-  const {
-    settings,
-    updateSettings,
-    isLoading: settingsLoading,
-  } = useUserSettings()
+  const { settings } = useUserSettings()
 
   // Calculate the actual range of hours based on slots
   const getActualHoursRange = () => {
@@ -63,14 +60,17 @@ export default function Home() {
   }
 
   const actualRange = getActualHoursRange()
-  const [displayStartHour, setDisplayStartHour] = useState(actualRange.start)
-  const [displayEndHour, setDisplayEndHour] = useState(actualRange.end)
 
-  // Reset display range when date changes or slots change
-  useEffect(() => {
-    setDisplayStartHour(actualRange.start)
-    setDisplayEndHour(actualRange.end)
-  }, [actualRange.start, actualRange.end])
+  // Extra hours revealed via "Show earlier/later hours", kept only for the date they were revealed on
+  const dateKey = format(currentDate, "yyyy-MM-dd")
+  const [revealedRange, setRevealedRange] = useState<{ date: string; start: number; end: number } | null>(null)
+  const revealed = revealedRange?.date === dateKey ? revealedRange : null
+  const displayStartHour = Math.min(actualRange.start, revealed?.start ?? 24)
+  const displayEndHour = Math.max(actualRange.end, revealed?.end ?? 0)
+
+  const revealHours = (start: number, end: number) => {
+    setRevealedRange({ date: dateKey, start, end })
+  }
 
   // Check if we can show earlier/later hours
   const canShowEarlier = displayStartHour > 0
@@ -118,7 +118,7 @@ export default function Home() {
           <p className="text-muted-foreground max-w-md">
             Create your first project to start tracking time
           </p>
-          <Button onClick={() => (window.location.href = "/projects")}>
+          <Button onClick={() => router.push("/projects")}>
             Create Project
           </Button>
         </div>
@@ -138,7 +138,7 @@ export default function Home() {
               <Button
                 variant="ghost"
                 onClick={() =>
-                  setDisplayStartHour((prev) => Math.max(0, prev - 1))
+                  revealHours(Math.max(0, displayStartHour - 1), displayEndHour)
                 }
                 className="text-muted-foreground hover:text-foreground hover:bg-accent/50 gap-2 min-w-48"
               >
@@ -168,7 +168,7 @@ export default function Home() {
               <Button
                 variant="ghost"
                 onClick={() =>
-                  setDisplayEndHour((prev) => Math.min(24, prev + 1))
+                  revealHours(displayStartHour, Math.min(24, displayEndHour + 1))
                 }
                 className="text-muted-foreground hover:text-foreground hover:bg-accent/50 gap-2 min-w-48"
               >

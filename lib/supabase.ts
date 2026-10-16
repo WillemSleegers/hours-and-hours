@@ -1,15 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Database types - can be regenerated with Supabase CLI:
-// npx supabase gen types typescript --project-id [project-id] > lib/supabase.ts
-
-type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+// pnpm dlx supabase gen types typescript --project-id [project-id] > lib/supabase.ts
 
 interface Database {
   public: {

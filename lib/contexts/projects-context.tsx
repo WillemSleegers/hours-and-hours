@@ -8,7 +8,7 @@ import { toast } from "sonner"
 interface ProjectsContextType {
   projects: Project[]
   isLoading: boolean
-  addProject: (name: string, color: string) => Promise<any>
+  addProject: (name: string, color: string) => Promise<Project>
   updateProject: (id: string, name: string, color: string) => Promise<void>
   deleteProject: (id: string) => Promise<void>
   toggleArchive: (id: string) => Promise<void>

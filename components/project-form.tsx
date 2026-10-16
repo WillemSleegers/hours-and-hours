@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Field, FieldLabel } from "@/components/ui/field"
@@ -56,12 +56,6 @@ export function ProjectForm({
   const [name, setName] = useState(initialName)
   const [color, setColor] = useState(initialColor)
   const [isSubmitting, setIsSubmitting] = useState(false)
-
-  // Sync state when initial values change (e.g., when editing different projects)
-  useEffect(() => {
-    setName(initialName)
-    setColor(initialColor)
-  }, [initialName, initialColor])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

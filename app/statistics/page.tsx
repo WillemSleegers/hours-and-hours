@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { format } from "date-fns"
+import { format, parseISO } from "date-fns"
 import { CalendarDays, X, Download, FileJson } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -34,10 +34,6 @@ export default function StatisticsPage() {
     Array<{ project_id: string; date: string; time_slot: number; note?: string | null }>
   >([])
   const [isLoading, setIsLoading] = useState(true)
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined)
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined)
-  const [earliestDate, setEarliestDate] = useState<Date | null>(null)
-  const [latestDate, setLatestDate] = useState<Date | null>(null)
   const [showArchived, setShowArchived] = useState(false)
   const [detailedExport, setDetailedExport] = useState(false)
 
@@ -48,44 +44,36 @@ export default function StatisticsPage() {
     }
   }, [authLoading, user, router])
 
+  const userId = user?.id
   useEffect(() => {
-    loadAllSlots()
-  }, [projects])
+    if (!userId) return
 
-  // Load saved date range from settings
-  useEffect(() => {
-    if (settings.stats_start_date) {
-      setStartDate(new Date(settings.stats_start_date))
-    }
-    if (settings.stats_end_date) {
-      setEndDate(new Date(settings.stats_end_date))
-    }
-  }, [settings.stats_start_date, settings.stats_end_date])
+    const loadAllSlots = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("time_slots")
+          .select("project_id, date, time_slot, note")
+          .order("date")
 
-  const loadAllSlots = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("time_slots")
-        .select("project_id, date, time_slot, note")
-        .order("date")
-
-      if (error) throw error
-
-      const slots = data as Array<{ project_id: string; date: string; time_slot: number; note?: string | null }>
-      setAllSlots(slots)
-
-      // Find earliest and latest dates
-      if (slots.length > 0) {
-        const dates = slots.map((s) => new Date(s.date))
-        setEarliestDate(new Date(Math.min(...dates.map((d) => d.getTime()))))
-        setLatestDate(new Date(Math.max(...dates.map((d) => d.getTime()))))
+        if (error) throw error
+        setAllSlots(data)
+      } catch (error) {
+        console.error("Error loading project stats:", error)
+      } finally {
+        setIsLoading(false)
       }
-    } catch (error) {
-      console.error("Error loading project stats:", error)
-    } finally {
-      setIsLoading(false)
     }
-  }
+
+    loadAllSlots()
+  }, [userId])
+
+  // The saved date range lives in settings, which update optimistically
+  const startDate = settings.stats_start_date ? parseISO(settings.stats_start_date) : undefined
+  const endDate = settings.stats_end_date ? parseISO(settings.stats_end_date) : undefined
+
+  // Slots are ordered by date
+  const earliestDate = allSlots.length > 0 ? parseISO(allSlots[0].date) : null
+  const latestDate = allSlots.length > 0 ? parseISO(allSlots[allSlots.length - 1].date) : null
 
   const getFilteredSlots = () =>
     allSlots.filter((slot) => {
@@ -114,20 +102,16 @@ export default function StatisticsPage() {
       })
 
   const handleStartDateChange = (date: Date | undefined) => {
-    setStartDate(date)
     updateSettings({
       stats_start_date: date ? format(date, "yyyy-MM-dd") : null,
     })
   }
 
   const handleEndDateChange = (date: Date | undefined) => {
-    setEndDate(date)
     updateSettings({ stats_end_date: date ? format(date, "yyyy-MM-dd") : null })
   }
 
   const resetDateFilter = () => {
-    setStartDate(undefined)
-    setEndDate(undefined)
     updateSettings({ stats_start_date: null, stats_end_date: null })
   }
 

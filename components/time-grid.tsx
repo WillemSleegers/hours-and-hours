@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, Fragment, useEffect, useRef } from "react"
+import { useState, Fragment, useRef } from "react"
 import { cn } from "@/lib/utils"
 import { Project, TimeSlot } from "@/lib/types"
 import { Button } from "@/components/ui/button"
@@ -50,20 +50,22 @@ export function TimeGrid({
   const [confirmReplaceSlot, setConfirmReplaceSlot] = useState<{slot: TimeSlot, newProjectId: string} | null>(null)
   const pointerDownPos = useRef<{ x: number; y: number } | null>(null)
 
-  // Sync localNotes with actual slot notes when slots change
-  useEffect(() => {
-    const newLocalNotes: Record<string, string> = {}
-    slots.forEach(slot => {
-      if (slot.note) {
-        newLocalNotes[slot.id] = slot.note
-      }
-    })
-    setLocalNotes(newLocalNotes)
-  }, [slots])
+  // Clear selection when project is cleared
+  const [prevActiveProjectId, setPrevActiveProjectId] = useState(activeProjectId)
+  if (activeProjectId !== prevActiveProjectId) {
+    setPrevActiveProjectId(activeProjectId)
+    if (!activeProjectId) setSelectedSlotTime(null)
+  }
 
-  // Save note when input loses focus
-  const handleNoteSave = (slotId: string, note: string) => {
-    onNoteUpdate(slotId, note)
+  // Save note when input loses focus. localNotes only holds unsaved edits,
+  // so the draft is dropped once the (optimistic) save has updated the slot.
+  const handleNoteSave = (slot: TimeSlot) => {
+    const draft = localNotes[slot.id]
+    if (draft === undefined) return
+    setLocalNotes((prev) =>
+      Object.fromEntries(Object.entries(prev).filter(([id]) => id !== slot.id))
+    )
+    if (draft !== (slot.note ?? "")) onNoteUpdate(slot.id, draft)
   }
 
   // Always display 15-minute slots for visual precision
@@ -218,13 +220,6 @@ export function TimeGrid({
     slotsToDelete.forEach(s => onSlotDelete(s.id))
     setSelectedSlotTime(null)
   }
-
-  // Clear selection when project is cleared
-  useEffect(() => {
-    if (!activeProjectId) {
-      setSelectedSlotTime(null)
-    }
-  }, [activeProjectId])
 
   const slotActionButtonProps = (projectId: string, onClick: (e: React.MouseEvent) => void) => ({
     size: "sm" as const,
@@ -392,10 +387,7 @@ export function TimeGrid({
                           // Update local state immediately for responsive UI
                           setLocalNotes(prev => ({ ...prev, [slot.id]: newNote }))
                         }}
-                        onBlur={(e) => {
-                          // Save note when input loses focus
-                          handleNoteSave(slot.id, e.target.value)
-                        }}
+                        onBlur={() => handleNoteSave(slot)}
                         onKeyDown={(e) => {
                           if (e.key === "Enter") {
                             e.currentTarget.blur()
