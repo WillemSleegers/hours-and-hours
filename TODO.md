@@ -17,10 +17,8 @@
   - Separate "Recent" section in project selector
   - Makes frequent projects faster to access
 
-- [ ] **Date Range Stats** - Filter project overview by date range
-  - This week / This month / Custom range picker
-  - Shows hours per project for selected period
-  - Useful for invoicing and time analysis
+- [ ] **Date Range Presets** - Quick ranges on the Statistics page (custom range already exists)
+  - This week / This month / Last month
 
 ## Lower Priority (Nice to have)
 
@@ -29,9 +27,8 @@
   - Ctrl+Shift+Z / Cmd+Shift+Z to redo
   - Show toast with "Undo" button after actions
 
-- [ ] **Export to CSV/PDF** - Generate reports for invoicing or record-keeping
-  - Export time entries for date range
-  - Group by project or by day
+- [ ] **Export Improvements** - CSV and JSON export already exist
+  - PDF export for invoicing or record-keeping
   - Include project totals and grand total
 
 - [ ] **Break Time Tracking** - Special "break" project type
@@ -43,3 +40,8 @@
 
 - [ ] **Timer Mode** - Start/stop timer instead of manual entry (optional alternative mode)
 - [ ] **Tags/Categories** - Tag entries for more granular filtering (e.g., "meeting", "coding", "planning")
+- [ ] **Month View** - Overview of a whole month
+- [ ] **Keyboard Shortcuts** - Faster entry on desktop
+- [ ] **Recurring Time Blocks / Templates** - Reusable entries for regular activities
+- [ ] **Mobile App** - Native app (React Native)
+- [ ] **Browser Extension** - Quick time tracking from the browser
